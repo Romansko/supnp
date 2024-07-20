@@ -1,0 +1,9 @@
+*.xml
+*.json
+venv
+__pycache__
+sample/*
+CP
+SD
+UCA
+CA
