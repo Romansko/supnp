@@ -1,2 +1,2 @@
 #!/bin/sh
-cmake -DENABLE_JSON=ON . && make
+cmake -DENABLE_SUPNP=ON . && make
