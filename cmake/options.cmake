@@ -39,3 +39,5 @@ set (UPNP_HAVE_SOAP ${UPNP_ENABLE_SOAP}) #see upnpconfig.h
 set (UPNP_HAVE_SSDP ${UPNP_ENABLE_SSDP}) #see upnpconfig.h
 set (UPNP_HAVE_TOOLS ${UPNP_ENABLE_HELPER_API_TOOLS}) #see upnpconfig.h
 set (UPNP_HAVE_WEBSERVER ${UPNP_ENABLE_WEBSERVER}) #see upnpconfig.h
+set (ENABLE_SUPNP ${ENABLE_SUPNP}) #see upnpconfig.h
+set (ENABLE_JSON ${ENABLE_JSON}) #see upnpconfig.h

@@ -482,6 +482,11 @@
 	#endif
 #endif
 
+/* SUPnP development check */
+#if ENABLE_SUPNP == 1 && (ENABLE_JSON == 0 || UPNP_ENABLE_OPEN_SSL == 0)
+#error "SUPnP was enabled but JSON / OpenSSL support was not"
+#endif
+
 /*
  * @}
  */

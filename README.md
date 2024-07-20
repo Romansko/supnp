@@ -207,6 +207,7 @@ The SDK for UPnP Devices is designed to compile and run under several operating 
 | Dependency | Description                                                                              |
 | ---------- | ---------------------------------------------------------------------------------------- |
 | libpthread | The header and library are installed as part of the glibc-devel package (or equivalent). |
+| libssl-dev | Required by [OpenSSL](#configure-openssl) / [SUPnP](#configure-supnp) only.              | 
 
 Additionally, the documentation for the SDK can be auto-generated from the upnp.h header file using Doxygen, a documentation system for C, C++, IDL, and Java\*.  Doxygen generates the documentation in HTML or TeX format. Using some additional tools, the TeX output can be converted into a PDF file. To generate the documentation these tools are required:
 
@@ -235,8 +236,9 @@ that builds the library using a Docker Ubuntu image.
 ```bash
 % docker run -it --rm ubuntu /bin/bash
 
+# libssl-dev is required by SUPnP & OpenSSL layers.
 % apt update \
-  && apt install -y build-essential autoconf libtool pkg-config git shtool \
+  && apt install -y build-essential autoconf libtool pkg-config git shtool libssl-dev \
   && git clone http://github.com/pupnp/pupnp.git \
   && cd pupnp \
   && ./bootstrap
@@ -285,6 +287,27 @@ A few options are available at configure time. Use "./configure --help" to displ
 ```
 
 will build a debug version with symbols support.
+
+<a name="configure-openssl"></a>
+To build the library with OpenSSL support:
+```bash
+apt install libssl-dev
+% ./configure --enable-open_ssl
+make
+```
+
+<a name="configure-supnp"></a>
+To build the library with SUPnP secure layer as presented by the paper [Kayas, G., Hossain, M., Payton, J., & Islam, S. R. (2021). SUPnP: Secure Access and Service Registration for UPnP-Enabled Internet of Things. IEEE Internet of Things Journal, 8(14), 11561-11580](https://ieeexplore.ieee.org/document/9352973):
+
+```bash
+% ./configure --enable-supnp
+% make
+```
+
+Note that SUPnP requires OpenSSL. Hence, The `--enable-open_ssl` flag is set automatically. However, the installation of `libssl-dev` should be done manually by:
+```bash
+% apt install libssl-dev
+```
 
 To build the library with the optional, integrated mini web server (note that this is the default):
 
@@ -404,6 +427,13 @@ All known options have the same meaning as stated in point 10.2. In Addition 2 o
   With this option on, the pthread4w package will be downloaded while configuring the build-env, then it will be build and installed along with upnp.
 
 - BUILD_TESTING: This option activates the tests.
+
+To enable SUPnP secure layer with cmake:
+```bash
+cmake -DENABLE_SUPNP=ON .
+make
+```
+
 
 If you don't want to build pthreads4w in the same build as upnp, you can download it from <https://github.com/Vollstrecker/pthreads4w>.
 Just build and install it. The libs and headers will be found, if you set CMAKE_INSTALL_PREFIX (the base install dir) to the same location.

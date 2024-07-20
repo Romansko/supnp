@@ -392,9 +392,29 @@ if test "x$enable_unspecified_server" = xyes ; then
         AC_DEFINE(UPNP_ENABLE_UNSPECIFIED_SERVER, 1, [see upnpconfig.h])
 fi
 
-RT_BOOL_ARG_ENABLE([open_ssl], [no], [open-ssl support])
+# Disabled by default
+RT_BOOL_ARG_ENABLE([json], [no], [JSON support])
+RT_BOOL_ARG_ENABLE([open_ssl], [no], [OpenSSL support])
+RT_BOOL_ARG_ENABLE([supnp], [no], [SUPnP secure layer support])
+
+# Check for SUPnP flag. Enable openssl & json support if supnp enabled.
+AM_CONDITIONAL(ENABLE_SUPNP, test x"$enable_supnp" = xyes)
+if test "x$enable_supnp" = xyes ; then
+        enable_open_ssl=yes  # Enable OpenSSL support
+        enable_json=yes      # Enable json support
+		AC_DEFINE(ENABLE_SUPNP, 1, [see upnpconfig.h])
+fi
+
+# Check for OpenSSL flag
+AM_CONDITIONAL(UPNP_ENABLE_OPEN_SSL, test x"$enable_open_ssl" = xyes)
 if test "x$enable_open_ssl" = xyes ; then
         AC_DEFINE(UPNP_ENABLE_OPEN_SSL, 1, [see upnpconfig.h])
+fi
+
+# Check for JSON flag
+AM_CONDITIONAL(ENABLE_JSON, test x"$enable_json" = xyes)
+if test "x$enable_json" = xyes ; then
+        AC_DEFINE(ENABLE_JSON, 1, [see upnpconfig.h])
 fi
 
 RT_BOOL_ARG_ENABLE([blocking_tcp_connections], [yes], [blocking TCP connections])

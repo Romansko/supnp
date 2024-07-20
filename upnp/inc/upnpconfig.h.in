@@ -69,6 +69,14 @@
  * optional features have been included in the installed library.
  */
 
+/** Defined to 1 if the library has been compiled with UPnP secure layer enabled
+ *  (i.e. configure --enable-supnp) */
+#undef ENABLE_SUPNP
+
+/** Defined to 1 if the library has been compiled with JSON support
+ *  (i.e. configure --enable-json) */
+#undef ENABLE_JSON
+
 /** Defined to 1 if the library has been compiled with client API enabled
  *  (i.e. configure --enable-client) */
 #undef UPNP_HAVE_CLIENT

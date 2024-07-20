@@ -107,6 +107,24 @@ int main(int argc, char *argv[])
 	printf("UPNP_HAVE_TOOLS \t= no\n");
 #endif
 
+#if UPNP_ENABLE_OPEN_SSL
+	printf("UPNP_ENABLE_OPEN_SSL \t= yes\n");
+#else
+	printf("UPNP_ENABLE_OPEN_SSL \t= no\n");
+#endif
+
+#if ENABLE_JSON
+	printf("ENABLE_JSON \t= yes\n");
+#else
+	printf("ENABLE_JSON \t= no\n");
+#endif
+
+#if ENABLE_SUPNP
+	printf("ENABLE_SUPNP (SUPnP) = yes\n");
+#else
+	printf("ENABLE_SUPNP (SUPnP) = no\n");
+#endif
+
 	/*
 	 * Test library initialisation
 	 */
