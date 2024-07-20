@@ -21,6 +21,7 @@ set (UPNP_SOURCES
 	src/api/UpnpStateVarRequest.c
 	src/api/UpnpString.c
 	src/api/UpnpSubscriptionRequest.c
+	src/file/file_utils.c
 	src/genlib/client_table/GenlibClientSubscription.c
 	src/genlib/client_table/client_table.c
 	src/genlib/miniserver/miniserver.c
@@ -97,6 +98,7 @@ list (APPEND UPNP_HEADERS
 	inc/UpnpString.h
 	inc/UpnpSubscriptionRequest.h
 	inc/UpnpUniStd.h
+	inc/file_utils.h
 	${PUPNP_BINARY_DIR}/upnp/inc/upnpconfig.h
 )
 
@@ -107,6 +109,37 @@ if (UPNP_ENABLE_HELPER_API_TOOLS)
 
 	list (APPEND UPNP_HEADERS
 		inc/upnptools.h
+	)
+endif()
+
+if (ENABLE_JSON)
+	list (APPEND UPNP_SOURCES
+		${PROJECT_SOURCE_DIR}/cJSON/cJSON.c
+	)
+
+	list (APPEND UPNP_HEADERS
+		${PROJECT_SOURCE_DIR}/cJSON/cJSON.h
+	)
+endif()
+
+if (UPNP_ENABLE_OPEN_SSL)
+	list (APPEND UPNP_SOURCES
+		src/openssl/openssl_wrapper.c
+	)
+
+	list (APPEND UPNP_HEADERS
+		inc/openssl_wrapper.h
+	)
+endif()
+
+if (ENABLE_SUPNP)
+	list (APPEND UPNP_SOURCES
+		src/supnp/supnp.c
+	)
+
+	list (APPEND UPNP_HEADERS
+		inc/supnp.h
+		inc/supnp_err.h
 	)
 endif()
 

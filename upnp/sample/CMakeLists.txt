@@ -4,6 +4,33 @@ else ()
 	set (UPNP_LIBRARY upnp_static)
 endif()
 
+if (ENABLE_SUPNP)
+	add_executable (registration_authority
+			common/sample_util.c
+			common/registration_authority.c
+			linux/registration_authority_main.c
+	)
+
+	target_include_directories (registration_authority
+			PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/common
+			PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/common
+	)
+
+	target_link_libraries (registration_authority
+			${UPNP_LIBRARY}
+	)
+
+	install (TARGETS registration_authority
+			DESTINATION ${CMAKE_INSTALL_BINDIR}
+			COMPONENT UPNP_samples
+	)
+
+	install (DIRECTORY web/
+			DESTINATION ${CMAKE_INSTALL_DATADIR}/upnp
+			COMPONENT UPNP_samples
+	)
+endif()
+
 if (UPNP_ENABLE_CLIENT_API)
 	add_executable (tv_ctrlpt
 		common/sample_util.c

@@ -35,6 +35,13 @@ tv_device_CPPFLAGS = \
 	-I$(srcdir)/common/ \
 	-I$(srcdir)/tvdevice
 endif
+if ENABLE_SUPNP
+noinst_PROGRAMS += registration_authority
+registration_authority_CPPFLAGS = \
+	$(AM_CPPFLAGS) \
+	-I$(srcdir)/common/ \
+	-I$(srcdir)/registration_authority
+endif
 endif
 
 tv_device_SOURCES = \
@@ -59,6 +66,13 @@ tv_combo_SOURCES = \
 	common/tv_device.c \
 	common/tv_device.h \
 	linux/tv_combo_main.c
+
+registration_authority_SOURCES = \
+	common/sample_util.c \
+	common/sample_util.h \
+	common/registration_authority.c \
+	common/registration_authority.h \
+	linux/registration_authority_main.c
 
 EXTRA_DIST = \
 	web/tvcombodesc.xml \

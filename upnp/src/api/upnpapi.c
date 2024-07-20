@@ -52,6 +52,10 @@
 #include "sysdep.h"
 #include "uuid.h"
 
+#ifdef ENABLE_SUPNP
+#include "supnp.h"
+#endif
+
 /* Needed for GENA */
 #include "gena.h"
 #include "miniserver.h"
@@ -539,6 +543,13 @@ static int UpnpInitStartServers(
 int UpnpInit2(const char *IfName, unsigned short DestPort)
 {
 	int retVal;
+
+#ifdef ENABLE_SUPNP
+	retVal = SUpnpInit();
+	if (retVal != SUPNP_E_SUCCESS) {
+		return retVal;
+	}
+#endif
 
 	/* Initializes the ithread library */
 	ithread_initialize_library();

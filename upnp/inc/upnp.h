@@ -65,6 +65,10 @@
 	#include <openssl/ssl.h>
 #endif
 
+#ifdef ENABLE_SUPNP
+	#include "supnp.h"
+#endif
+
 #define LINE_SIZE (size_t)180
 #define NAME_SIZE (size_t)256
 #define MNFT_NAME_SIZE 64

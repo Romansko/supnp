@@ -4,11 +4,22 @@
 # Copyright (C) 2005 Rémi Turboult <r3mi@users.sourceforge.net>
 #
 
-SUBDIRS = . sample
+if ENABLE_JSON
+JSON_DIR=../cJSON
+else
+JSON_DIR=
+endif
+
+SUBDIRS = . sample $(JSON_DIR)
 
 AM_CPPFLAGS = \
 	-I$(srcdir)/inc \
 	-I$(top_srcdir)/ixml/inc
+
+if ENABLE_JSON
+AM_CPPFLAGS += -I$(top_srcdir)/cJSON
+endif
+
 
 LDADD = \
 	libupnp.la \
@@ -17,7 +28,7 @@ LDADD = \
 
 upnpincludedir = $(includedir)/upnp
 upnpinclude_HEADERS = \
-        inc/UpnpActionComplete.h \
+    inc/UpnpActionComplete.h \
 	inc/UpnpActionRequest.h \
 	inc/Callback.h \
 	inc/UpnpDiscovery.h \
@@ -36,13 +47,25 @@ upnpinclude_HEADERS = \
 	inc/UpnpInet.h \
 	inc/UpnpIntTypes.h \
 	inc/UpnpStdInt.h \
-	inc/UpnpUniStd.h
+	inc/UpnpUniStd.h \
+	inc/file_utils.h
 
 nodist_upnpinclude_HEADERS = inc/upnpconfig.h 
 if ENABLE_TOOLS
 upnpinclude_HEADERS += inc/upnptools.h 
 endif
 
+if ENABLE_JSON
+upnpinclude_HEADERS += $(top_srcdir)/cJSON/cJSON.h
+endif
+
+if UPNP_ENABLE_OPEN_SSL
+upnpinclude_HEADERS += inc/openssl_wrapper.h 
+endif
+
+if ENABLE_SUPNP
+upnpinclude_HEADERS += inc/supnp.h inc/supnp_err.h
+endif
 
 lib_LTLIBRARIES = libupnp.la
 
@@ -50,7 +73,7 @@ libupnp_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/src/inc
 
 libupnp_la_LDFLAGS = \
 	-version-info $(LT_VERSION_UPNP) \
-	-export-symbols-regex '^Upnp.*' \
+	-export-symbols-regex '^S?Upnp.*' \
 	$(top_builddir)/ixml/libixml.la
 
 if WIN32
@@ -108,7 +131,7 @@ libupnp_la_SOURCES += \
 # ssdp
 if ENABLE_SSDP
 libupnp_la_SOURCES += \
-        src/ssdp/SSDPResultData.c \
+    src/ssdp/SSDPResultData.c \
 	src/ssdp/SSDPResultData.h \
 	src/ssdp/SSDPResultDataCallback.c \
 	src/ssdp/SSDPResultDataCallback.h \
@@ -153,7 +176,7 @@ endif
 
 # api
 libupnp_la_SOURCES += \
-        src/api/UpnpActionComplete.c \
+    src/api/UpnpActionComplete.c \
 	src/api/UpnpActionRequest.c \
 	src/api/UpnpDiscovery.c \
 	src/api/UpnpEvent.c \
@@ -167,8 +190,23 @@ libupnp_la_SOURCES += \
 	src/api/upnpapi.c \
 	src/api/upnpdebug.c
 
+# File Utils
+libupnp_la_SOURCES += src/file/file_utils.c
+
 if ENABLE_TOOLS
 libupnp_la_SOURCES += src/api/upnptools.c
+endif
+
+if ENABLE_JSON
+libupnp_la_SOURCES += $(top_srcdir)/cJSON/cJSON.c
+endif
+
+if UPNP_ENABLE_OPEN_SSL
+libupnp_la_SOURCES += src/openssl/openssl_wrapper.c
+endif
+
+if ENABLE_SUPNP
+libupnp_la_SOURCES += src/supnp/supnp.c
 endif
 
 if ENABLE_DEBUG
@@ -176,7 +214,6 @@ AM_CPPFLAGS         += -DDEBUG -DUPNP_HAVE_DEBUG -DSTATS
 else
 AM_CPPFLAGS         += -DNDEBUG
 endif
-
 
 # uuid
 if ENABLE_UUID
