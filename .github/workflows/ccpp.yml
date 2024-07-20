@@ -26,11 +26,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04]
+        os: [ubuntu-24.04]
         conf: [Debug, Release]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'true'
       - name: Configure
         run: >
           cmake
@@ -39,7 +41,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=${{ matrix.conf }}
           -DBUILD_TESTING=ON
           -DDOWNLOAD_AND_BUILD_DEPS=ON
-          -DUPNP_ENABLE_OPEN_SSL=ON
+          -DENABLE_SUPNP=ON
           -DCMAKE_C_FLAGS="-Wall -Wpedantic"
           -DCMAKE_INSTALL_PREFIX=${{ GITHUB.WORKSPACE }}/test-install
           ${{ env.cmake_extra_flags }}
@@ -64,7 +66,9 @@ jobs:
         conf: [Debug, Release]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'true'
       - name: Configure
         run: >
           cmake
@@ -119,7 +123,9 @@ jobs:
         with:
           msystem: ${{matrix.sys}}
           install: mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-make git mingw-w64-clang-x86_64-gcc
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'true'
       - name: Configure
         run: >
           cmake
@@ -143,20 +149,23 @@ jobs:
         run: cmake --install build --config ${{matrix.conf}}
   # Linux sanitizer builds
   build_asan:
-    name: Sanitizer build (ubuntu-20.04) - ${{ matrix.tool }}
-    runs-on: ubuntu-20.04
+    name: Sanitizer build (ubuntu-24.04) - ${{ matrix.tool }}
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         tool: [autotools, cmake]
         conf: [Debug]
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'true'
     - name: bootstrap and configure (autotools)
       if: ${{ matrix.tool == 'autotools' }}
       run: >
         ./bootstrap &&
         ./configure
         --enable-debug
+        --enable-supnp
         ${{ env.sanitizer_autotools_flags }}
     - name: configure (cmake)
       if: ${{ matrix.tool == 'cmake' }}
@@ -167,7 +176,7 @@ jobs:
         -DBUILD_TESTING=ON
         -DCMAKE_BUILD_TYPE=${{ matrix.conf }}
         -DDOWNLOAD_AND_BUILD_DEPS=ON
-        -DUPNP_ENABLE_OPEN_SSL=ON
+        -DENABLE_SUPNP=ON
         ${{ env.cmake_sanitizer_flags }}
         ${{ env.cmake_extra_flags }}
     - name: build (autotools)
