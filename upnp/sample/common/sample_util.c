@@ -623,11 +623,19 @@ int SampleUtil_FindAndParseService(IXML_Document *DescDoc,
 	IXML_NodeList *serviceList = NULL;
 	IXML_Element *service = NULL;
 
+#if 0
+	/*
+	 * The use of URLBase is deprecated from UPnP 1.1 onwards. See:
+	 * https://openconnectivity.org/upnp-specs/UPnP-arch-DeviceArchitecture-v2.0-20200417.pdf#page=51
+	 */
 	baseURL = SampleUtil_GetFirstDocumentItem(DescDoc, "URLBase");
 	if (baseURL)
 		base = baseURL;
 	else
 		base = location;
+#endif
+	base = location;
+
 #ifdef OLD_FIND_SERVICE_CODE
 	serviceList = SampleUtil_GetFirstServiceList(DescDoc);
 #else  /* OLD_FIND_SERVICE_CODE */
