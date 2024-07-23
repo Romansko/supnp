@@ -98,7 +98,6 @@ list (APPEND UPNP_HEADERS
 	inc/UpnpString.h
 	inc/UpnpSubscriptionRequest.h
 	inc/UpnpUniStd.h
-	inc/file_utils.h
 	${PUPNP_BINARY_DIR}/upnp/inc/upnpconfig.h
 )
 
@@ -122,6 +121,12 @@ if (ENABLE_JSON)
 	)
 endif()
 
+if (UPNP_ENABLE_OPEN_SSL OR ENABLE_SUPNP)
+	list (APPEND UPNP_HEADERS
+		inc/file_utils.h
+	)
+endif()
+
 if (UPNP_ENABLE_OPEN_SSL)
 	list (APPEND UPNP_SOURCES
 		src/openssl/openssl_wrapper.c
@@ -138,8 +143,8 @@ if (ENABLE_SUPNP)
 	)
 
 	list (APPEND UPNP_HEADERS
-		inc/supnp.h
 		inc/supnp_err.h
+		inc/supnp.h
 	)
 endif()
 

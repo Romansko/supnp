@@ -72,6 +72,11 @@ extern "C" {
  */
 #define SUPNP_E_INVALID_DOCUMENT (-605)
 
+/*!
+ * \brief Test failed
+ */
+#define SUPNP_E_TEST_FAIL (-699)
+
 /* @} SUPnPErrorCodes */
 
 #ifdef __cplusplus

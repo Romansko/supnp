@@ -65,17 +65,23 @@ extern "C" {
 	supnp_verify(cleaner, value, SUPNP_E_INVALID_DOCUMENT, "Unexpected '%s'\n", key); \
 }
 
+void freeif(void* ptr)
+{
+	if (ptr)
+		free(ptr);
+}
+
 /**
  * Initialize SUPnP secure layer.
  * @return SUPNP_E_SUCCESS on success, SUPNP_E_INTERNAL_ERROR on failure.
  */
 int SUpnpInit()
 {
+	supnp_log("Initializing SUPnP secure layer.\n");
 	int ret = init_openssl_wrapper();
 	supnp_verify(, (ret == OPENSSL_SUCCESS), ret, "Error initializing OpenSSL.\n");
 	return SUPNP_E_SUCCESS;
 }
-
 
 
 /**
@@ -169,7 +175,7 @@ int verify_supnp_document(const cJSON* supnp_document, EVP_PKEY * ca_pkey, X509 
 		}
 		/* Extract the hex string signature and convert it to bytes */
 		const char * signature = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(supnp_document, sig_name));
-		if (verify_signature(sig_name, pkey, signature, data) != OPENSSL_SUCCESS)
+		if (verify_signature(sig_name, pkey, signature, (unsigned char *)data, strlen(data)) != OPENSSL_SUCCESS)
 		{
 			ret = SUPNP_E_INVALID_DOCUMENT;
 			break;
@@ -182,8 +188,8 @@ int verify_supnp_document(const cJSON* supnp_document, EVP_PKEY * ca_pkey, X509 
 	return ret;
 }
 
-
-int SUpnp_dummy()
+/* Temporary */
+int test_supnp_ducuments()
 {
 	int ret = SUPNP_E_SUCCESS;
 
@@ -230,6 +236,119 @@ int SUpnp_dummy()
 	return ret;
 }
 
+/* Temporary */
+int test_nonce_encryption()
+{
+	unsigned char hash[SHA256_DIGEST_LENGTH];
+	int ret = SUPNP_E_SUCCESS;
+	EVP_PKEY * sd_pubkey = NULL;
+	EVP_PKEY * sd_prikey = NULL;
+	unsigned char * nonce = NULL;
+	unsigned char * enc_nonce = NULL;
+	unsigned char * dec_nonce = NULL;
+	unsigned char * enc_hash = NULL;
+	unsigned char * dec_hash = NULL;
+	size_t enc_len = 0;
+	size_t dec_len = 0;
+	size_t ehash_len = 0;
+	size_t dhash_len = 0;
+
+	// load keys
+	sd_pubkey = load_public_key_from_pem("../../simulation/SD/public_key.pem");
+	sd_prikey = load_private_key_from_pem("../../simulation/SD/private_key.pem");
+
+	// RA generates nonce
+	nonce = generate_nonce(OPENSSL_CSPRNG_SIZE);
+	supnp_log("[*] Generated nonce: ");
+	print_as_hex(nonce, OPENSSL_CSPRNG_SIZE);
+
+	// RA encrypts the nonce with participant's public Key
+	enc_nonce = encrypt_asym(sd_pubkey, &enc_len, nonce, OPENSSL_CSPRNG_SIZE);
+	supnp_log("[*] Encrypted nonce: ");
+	print_as_hex(enc_nonce, enc_len);
+
+	// Participant decrypts the challenge with its private key
+	dec_nonce = decrypt_asym(sd_prikey, &dec_len, enc_nonce, enc_len);
+	supnp_log("[*] Decrypted nonce: ");
+	print_as_hex(dec_nonce, dec_len);
+
+	// Participant hash the decrypted n once
+	do_sha256(nonce, OPENSSL_CSPRNG_SIZE, hash);
+	supnp_log("[*] Hash(nonce): ");
+	print_as_hex(hash, SHA256_DIGEST_LENGTH);
+	
+	// Participant encrypts the nonce hash with its private key
+	enc_hash = encrypt_asym(sd_prikey, &ehash_len, hash, SHA256_DIGEST_LENGTH);
+	supnp_log("[*] Encrypted Hash(nonce): ");
+	print_as_hex(enc_hash, SHA256_DIGEST_LENGTH);
+
+	// RA Decrypts encrypted hash with public key
+	dec_hash = decrypt_asym(sd_prikey, &dhash_len, enc_hash, ehash_len);
+	supnp_log("[*] Decrypted Hash(nonce): ");
+	print_as_hex(dec_hash, SHA256_DIGEST_LENGTH);
+
+	// RA Verifies the hashes are the same
+	if ((nonce == NULL) || (enc_nonce == NULL) || (dec_nonce == NULL) || (enc_hash == NULL))
+	{
+		ret = SUPNP_E_TEST_FAIL;
+	}
+	else if (memcmp(nonce, dec_nonce, OPENSSL_CSPRNG_SIZE) != 0)
+	{
+		supnp_error("Decrypted nonce doesn't match the original nonce.\n");
+		ret = SUPNP_E_TEST_FAIL;
+	}
+	else if (memcmp(hash, dec_hash, SHA256_DIGEST_LENGTH) != 0)
+	{
+		supnp_error("Decrypted nonce hash doesn't match the original hash.\n");
+	}
+	else
+	{
+		supnp_log("Public Key verification succeeded.\n");
+	}
+
+	freeif(dec_hash);
+	freeif(enc_hash);
+	freeif(dec_nonce);
+	freeif(enc_nonce);
+	freeif(nonce);
+	EVP_PKEY_free(sd_prikey);
+	EVP_PKEY_free(sd_pubkey);
+	return ret;
+}
+
+/**
+ * Test Phase B - registration process
+ */
+void SUpnp_test_registration()
+{
+	int ret = 0;
+
+	/**
+	 * A participant sends its SAD / DSD, Cert(uca) and Cert(p).
+	 * The RA validates the authenticity of the participant's public key & the UCA's public key,
+	 * which is included in the certificates, by verifying the signatures of these certificates.
+	 *  The RA verifies the authenticity and integrity of the specification document DSD or SAD.
+	 * 
+	 */
+	ret = test_supnp_ducuments();
+
+	/**
+	 * The RA needs to verify that the public key really belongs to the participant.
+	 * The RA generates a nonce N and encrypts the challenge using the public key of the participant.
+	 * The participant decrypts the challenge using its private key. Next,the participant generates a 
+	 * signed response to challenge by encrypting the hash of the nonce N (HN = Hash(N)).
+	 * The RA decrypts the response using the public key, and checks if the hashes match.
+	 */
+	ret = test_nonce_encryption();
+
+	/**
+	 * todo: verify that the capability of an SD matches its DDD.
+	 * The RA retrieves the device description document of the SD. 
+	 * The RA matches the services provided by the SD with its HW and SW specification included in the DSD. 
+	 * The RA uses an attribute ledger to perform the validation. The ledger maintains a mapping between a 
+	 * service type and the HW and SW attributes require to provide the service. 
+	 */
+}
 
 #ifdef __cplusplus
 }

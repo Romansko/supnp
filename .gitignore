@@ -159,6 +159,7 @@ IXMLConfig.cmake
 UPNPConfig.cmake
 IXMLConfigVersion.cmake
 UPNPConfigVersion.cmake
+build.ninja
 
 # Logs / Traces
 **/*.log

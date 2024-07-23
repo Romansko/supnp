@@ -47,8 +47,7 @@ upnpinclude_HEADERS = \
 	inc/UpnpInet.h \
 	inc/UpnpIntTypes.h \
 	inc/UpnpStdInt.h \
-	inc/UpnpUniStd.h \
-	inc/file_utils.h
+	inc/UpnpUniStd.h
 
 nodist_upnpinclude_HEADERS = inc/upnpconfig.h 
 if ENABLE_TOOLS
@@ -60,11 +59,25 @@ upnpinclude_HEADERS += $(top_srcdir)/cJSON/cJSON.h
 endif
 
 if UPNP_ENABLE_OPEN_SSL
+upnpinclude_HEADERS += \
+	inc/file_utils.h
+else
+if ENABLE_SUPNP
+upnpinclude_HEADERS += \
+	inc/file_utils.h
+endif
+endif
+
+# OpenSSL Wrapper
+if UPNP_ENABLE_OPEN_SSL
 upnpinclude_HEADERS += inc/openssl_wrapper.h 
 endif
 
+# SUPnP
 if ENABLE_SUPNP
-upnpinclude_HEADERS += inc/supnp.h inc/supnp_err.h
+upnpinclude_HEADERS += \
+	inc/supnp_err.h \
+	inc/supnp.h
 endif
 
 lib_LTLIBRARIES = libupnp.la

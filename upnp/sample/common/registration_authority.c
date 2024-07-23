@@ -1422,7 +1422,7 @@ int TvDeviceStart(char *iface,
 		return ret;
 	}
 
-	ret = SUpnp_dummy();
+	SUpnp_test_registration();
 
 	switch (ip_mode) {
 	case IP_MODE_IPV4:
