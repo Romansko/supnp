@@ -77,6 +77,7 @@ endif
 if ENABLE_SUPNP
 upnpinclude_HEADERS += \
 	inc/supnp_err.h \
+	inc/supnp_captoken.h \
 	inc/supnp.h
 endif
 
@@ -219,7 +220,9 @@ libupnp_la_SOURCES += src/openssl/openssl_wrapper.c
 endif
 
 if ENABLE_SUPNP
-libupnp_la_SOURCES += src/supnp/supnp.c
+libupnp_la_SOURCES += \
+	src/supnp/supnp.c \
+	src/supnp/supnp_captoken.c
 endif
 
 if ENABLE_DEBUG

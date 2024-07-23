@@ -140,10 +140,12 @@ endif()
 if (ENABLE_SUPNP)
 	list (APPEND UPNP_SOURCES
 		src/supnp/supnp.c
+		src/supnp/supnp_captoken.c
 	)
 
 	list (APPEND UPNP_HEADERS
 		inc/supnp_err.h
+		inc/supnp_captoken.h
 		inc/supnp.h
 	)
 endif()
