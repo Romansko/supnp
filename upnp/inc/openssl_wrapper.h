@@ -1,8 +1,5 @@
-#ifndef OPENSSL_WRAPPER_H
-#define OPENSSL_WRAPPER_H
-
 /*!
- * \addtogroup SUPnP
+* \addtogroup SUPnP
  *
  * \file openssl_wrapper.h
  *
@@ -10,14 +7,18 @@
  *
  * \author Roman Koifman
  */
+#ifndef OPENSSL_WRAPPER_H
+#define OPENSSL_WRAPPER_H
+
 #include "UpnpGlobal.h" /* for UPNP_EXPORT_SPEC */
 #include "upnpconfig.h"
 
-#include <stddef.h>
-
 #ifdef UPNP_ENABLE_OPEN_SSL
 
+#define OPENSSL_API_COMPAT 30000 /* OpenSSL 3.0.0 */
+
 #include <openssl/types.h>
+#include <openssl/sha.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -168,7 +169,7 @@ UPNP_EXPORT_SPEC unsigned char * generate_nonce(size_t nonce_size);
  *
  * \return OPENSSL_SUCCESS on success, OPENSSL_FAILURE on failure.
  */
-int do_sha256(const unsigned char *data, size_t dsize, unsigned char hash[]);
+int do_sha256(const unsigned char *data, size_t dsize, unsigned char hash[SHA256_DIGEST_LENGTH]);
 
 #ifdef __cplusplus
 }

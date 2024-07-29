@@ -10,6 +10,7 @@
  *
  * \author Roman Koifman
  */
+#include "stdio.h"
 #include "UpnpGlobal.h" /* for UPNP_EXPORT_SPEC */
 #include "upnpconfig.h"
 
@@ -78,6 +79,38 @@ extern "C" {
 #define SUPNP_E_TEST_FAIL (-699)
 
 /* @} SUPnPErrorCodes */
+
+/**
+ * Internal error logging macro
+ */
+#define supnp_error(...) { \
+    fprintf(stderr, "[SUPnP Error] %s::%s(%d): ", __FILE__, __func__, __LINE__); \
+    fprintf(stderr, __VA_ARGS__); \
+ }
+
+
+/**
+ * Internal message logging macro
+ */
+#define supnp_log(...) { \
+    fprintf(stdout, "[SUPnP]: "); \
+    fprintf(stdout, __VA_ARGS__); \
+ }
+
+/**
+ * Internal verification macro
+ * @param cleaner cleanup function. Leave Empty if no cleanup is required.
+ * @param cond condition to check
+ * @param ret return value on failure
+ */
+#define supnp_verify(cleaner, cond, ret, ...) { \
+    if (!(cond)) { \
+        supnp_error(__VA_ARGS__); \
+        cleaner; \
+        return ret; \
+    } \
+ }
+
 
 #ifdef __cplusplus
 }

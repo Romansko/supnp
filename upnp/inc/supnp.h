@@ -1,8 +1,5 @@
-#ifndef SUPNP_H
-#define SUPNP_H
-
 /*!
- * \addtogroup SUPnP
+* \addtogroup SUPnP
  *
  * \file supnp.h
  *
@@ -13,6 +10,9 @@
  *
  * \author Roman Koifman
  */
+#ifndef SUPNP_H
+#define SUPNP_H
+
 #include "UpnpGlobal.h" /* for UPNP_EXPORT_SPEC */
 #include "upnpconfig.h"
 
