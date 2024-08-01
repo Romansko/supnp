@@ -27,28 +27,23 @@ typedef struct device_info_t
     const char* ip;
     uint16_t port;
     void * desc_doc;
-    char * desc_doc_uri;
+    const char * desc_doc_uri;
 } device_info_t;
 
-typedef struct sd_cap_token_t
+typedef struct cap_token_t
 {
-    uint32_t id;
-    const unsigned char* ra_pk; // RA Public Key
-} sd_cap_token_t;
+    uint32_t ID;
+    const unsigned char * RA_PK; // RA Public Key
 
-
-typedef struct cp_cap_token_t
-{
-    uint32_t id;
-    const unsigned char* ra_pk; // RA Public Key
-} cp_cap_token_t;
+    const unsigned char * DESC_SIG; // Device Description URI Signature
+} cap_token_t;
 
 
 UPNP_EXPORT_SPEC uint32_t random_id();
 
-UPNP_EXPORT_SPEC sd_cap_token_t* generate_cap_token_sd(device_info_t* info, EVP_PKEY *ra_pkey);
+UPNP_EXPORT_SPEC cap_token_t* generate_cap_token_sd(device_info_t* info, EVP_PKEY *ra_pkey);
 
-UPNP_EXPORT_SPEC cp_cap_token_t* generate_cap_token_cp(device_info_t* info, EVP_PKEY *ra_pkey);
+UPNP_EXPORT_SPEC cap_token_t* generate_cap_token_cp(device_info_t* info, EVP_PKEY *ra_pkey);
 
 
 #ifdef __cplusplus

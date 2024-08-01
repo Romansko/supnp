@@ -29,16 +29,10 @@ extern "C" {
 #endif
 
 
-#define supnp_extract_json_string(cleaner, doc, key, value) \
+#define supnp_extract_json_string(doc, key, value) \
 { \
 	value = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(doc, key)); \
-	supnp_verify(cleaner, value, SUPNP_E_INVALID_DOCUMENT, "Unexpected '%s'\n", key); \
-}
-
-void freeif(void* ptr)
-{
-	if (ptr)
-		free(ptr);
+	supnp_verify(value != NULL, "Unexpected '%s'\n", key); \
 }
 
 /**
@@ -48,9 +42,10 @@ void freeif(void* ptr)
 int SUpnpInit()
 {
 	supnp_log("Initializing SUPnP secure layer.\n");
-	int ret = init_openssl_wrapper();
-	supnp_verify(, (ret == OPENSSL_SUCCESS), ret, "Error initializing OpenSSL.\n");
-	return SUPNP_E_SUCCESS;
+	supnp_verify(init_openssl_wrapper() == OPENSSL_SUCCESS, "Error initializing OpenSSL.\n");
+    return SUPNP_E_SUCCESS;
+cleanup:
+	return SUPNP_E_INTERNAL_ERROR;
 }
 
 
@@ -73,50 +68,50 @@ int verify_supnp_document(const cJSON* supnp_document, EVP_PKEY * ca_pkey, X509 
 	EVP_PKEY * pkey = NULL;
 
 	/* Arguments Verification */
-	supnp_verify(, (supnp_document != NULL), SUPNP_E_INVALID_ARGUMENT, "Empty DSD / SAD document provided\n");
-	supnp_verify(, (ca_pkey != NULL),        SUPNP_E_INVALID_ARGUMENT, "Empty CA public key provided\n");
-	supnp_verify(, (uca_cert != NULL),       SUPNP_E_INVALID_ARGUMENT, "Empty UCA Certificate provided\n");
-	supnp_verify(, (device_cert != NULL),    SUPNP_E_INVALID_ARGUMENT, "Empty Device Certificate provided\n");
+    ret = SUPNP_E_INVALID_ARGUMENT;
+	supnp_verify(supnp_document != NULL, "Empty DSD / SAD document provided\n");
+	supnp_verify(ca_pkey != NULL, "Empty CA public key provided\n");
+	supnp_verify(uca_cert != NULL, "Empty UCA Certificate provided\n");
+	supnp_verify(device_cert != NULL, "Empty Device Certificate provided\n");
 
 	/* Read SUPnP document name & type */
-	supnp_extract_json_string(, supnp_document, SUPNP_DOC_NAME, device_name);
-	supnp_extract_json_string(, supnp_document, SUPNP_DOC_TYPE, device_type);
+    ret = SUPNP_E_INVALID_DOCUMENT;
+	supnp_extract_json_string(supnp_document, SUPNP_DOC_NAME, device_name);
+	supnp_extract_json_string(supnp_document, SUPNP_DOC_TYPE, device_type);
 	supnp_log("Verifying '%s' document. Type: '%s'.\n", device_name, device_type);
 
 	/* Verify UCA Certificate */
-	supnp_verify(, (verify_certificate("UCA", uca_cert, ca_pkey) == OPENSSL_SUCCESS), SUPNP_E_INVALID_CERTIFICATE, "Invalid UCA Certificate\n");
+    ret = SUPNP_E_INVALID_CERTIFICATE;
+	supnp_verify(verify_certificate("UCA", uca_cert, ca_pkey) == OPENSSL_SUCCESS, "Invalid UCA Certificate\n");
 
 	/* Extract UCA Public Key && Verify Device Certificate */
 	EVP_PKEY * uca_pk = X509_get_pubkey(uca_cert);
-	supnp_verify(EVP_PKEY_free(uca_pk), (verify_certificate(device_name, device_cert, uca_pk) == OPENSSL_SUCCESS), SUPNP_E_INVALID_CERTIFICATE, "Invalid Device Certificate.\n");
+	supnp_verify(verify_certificate(device_name, device_cert, uca_pk) == OPENSSL_SUCCESS, "Invalid Device Certificate.\n");
 
 	/* Extract Device Public Key */
 	EVP_PKEY * device_pkey = X509_get_pubkey(device_cert);
 
 	/* Verify Device Public Key */
-	supnp_extract_json_string(EVP_PKEY_free(uca_pk), supnp_document, SUPNP_DOC_PUBLIC_KEY, in_doc_pkey);
+    ret = SUPNP_E_INVALID_DOCUMENT;
+	supnp_extract_json_string(supnp_document, SUPNP_DOC_PUBLIC_KEY, in_doc_pkey);
 	EVP_PKEY * doc_pk = load_public_key_from_hex(in_doc_pkey);
-	supnp_verify(EVP_PKEY_free(uca_pk), (doc_pk), SUPNP_E_INVALID_DOCUMENT, "Error loading public key from '%s'.\n", SUPNP_DOC_PUBLIC_KEY);
-	ret = EVP_PKEY_eq(doc_pk, device_pkey);
-	EVP_PKEY_free(doc_pk);  // Not required anymore
-	supnp_verify(EVP_PKEY_free(uca_pk); EVP_PKEY_free(device_pkey), (ret == OPENSSL_SUCCESS), SUPNP_E_INVALID_DOCUMENT, "Document's device public key doesn't match Device ceretificate's public key.\n");
+	supnp_verify(doc_pk != NULL, "Error loading public key from '%s'.\n", SUPNP_DOC_PUBLIC_KEY);
+	supnp_verify(EVP_PKEY_eq(doc_pk, device_pkey) == OPENSSL_SUCCESS, "Document's device public key doesn't match Device ceretificate's public key.\n");
 
 	/* Retrieve signature verification conditions */
-	supnp_extract_json_string(EVP_PKEY_free(uca_pk); EVP_PKEY_free(device_pkey), supnp_document, SUPNP_DOC_SIG_CON, sig_ver_con);
-	ret = sscanf(sig_ver_con, "%d-of-%d", &x, &y);
-	supnp_verify(EVP_PKEY_free(uca_pk); EVP_PKEY_free(device_pkey), (ret == 2), SUPNP_E_INVALID_DOCUMENT, "Error parsing Signature Verification Conditions '%s'.\n", SUPNP_DOC_SIG_CON);
-	supnp_verify(EVP_PKEY_free(uca_pk); EVP_PKEY_free(device_pkey), (x >= 0 && y >= 0 && x <= y), SUPNP_E_INVALID_DOCUMENT, "Invalid Signature Verification Conditions '%s'.\n", SUPNP_DOC_SIG_CON);
+	supnp_extract_json_string(supnp_document, SUPNP_DOC_SIG_CON, sig_ver_con);
+	supnp_verify(sscanf(sig_ver_con, "%d-of-%d", &x, &y) == 2, "Error parsing Signature Verification Conditions '%s'.\n", SUPNP_DOC_SIG_CON);
+	supnp_verify(x >= 0 && y >= 0 && x <= y, "Invalid Signature Verification Conditions '%s'.\n", SUPNP_DOC_SIG_CON);
 	supnp_log("Signature Verification Conditions: %d-of-%d\n", x, y);
 
 	/* Retrieve Signatures */
 	const cJSON* sigs = cJSON_GetObjectItemCaseSensitive(supnp_document, SUPNP_DOC_SIGNATURES);
-	supnp_verify(EVP_PKEY_free(uca_pk); EVP_PKEY_free(device_pkey), cJSON_IsArray(sigs), SUPNP_E_INVALID_DOCUMENT, "Unexpected '%s'\n", SUPNP_DOC_SIGNATURES);
-	supnp_verify(EVP_PKEY_free(uca_pk); EVP_PKEY_free(device_pkey), (cJSON_GetArraySize(sigs) == y), SUPNP_E_INVALID_DOCUMENT, "Unexpected number of signatures in '%s'\n", SUPNP_DOC_SIGNATURES);
+	supnp_verify(cJSON_IsArray(sigs), "Unexpected '%s'\n", SUPNP_DOC_SIGNATURES);
+	supnp_verify(cJSON_GetArraySize(sigs) == y, "Unexpected number of signatures in '%s'\n", SUPNP_DOC_SIGNATURES);
 	if (x == 0) {
-		EVP_PKEY_free(uca_pk);
-		EVP_PKEY_free(device_pkey);
+	    ret = SUPNP_E_SUCCESS;
 		supnp_log("Signatures verification is not required.\n");
-		return SUPNP_E_SUCCESS;
+		goto cleanup;  /* Done */
 	}
 
 	/* Delete signatures from document, leaving only the content. */
@@ -152,9 +147,12 @@ int verify_supnp_document(const cJSON* supnp_document, EVP_PKEY * ca_pkey, X509 
 		}
 		supnp_log("'%s' signature ok.\n", sig_name);
 	}
-	free(data);
-	EVP_PKEY_free(uca_pk);
-	EVP_PKEY_free(device_pkey);
+
+cleanup:
+	freeif(data);
+    freeif2(doc_pk, EVP_PKEY_free);
+	freeif2(uca_pk, EVP_PKEY_free);
+	freeif2(device_pkey, EVP_PKEY_free);
 	return ret;
 }
 
@@ -194,15 +192,14 @@ int test_supnp_ducuments()
 	}
 
 	/* Free Objects */
-	cJSON_Delete(dsd_root);
-	cJSON_Delete(sad_root);
-	free(sad);
-	free(dsd);
-	X509_free(cp_cert);
-	X509_free(sd_cert);
-	X509_free(uca_cert);
-	EVP_PKEY_free(ca_pk);
-
+	freeif2(dsd_root, cJSON_Delete);
+	freeif2(sad_root, cJSON_Delete);
+	freeif(sad);
+	freeif(dsd);
+	freeif2(cp_cert, X509_free);
+	freeif2(sd_cert, X509_free);
+	freeif2(uca_cert, X509_free);
+	freeif2(ca_pk, EVP_PKEY_free);
 	return ret;
 }
 
@@ -229,32 +226,32 @@ int test_nonce_encryption()
 
 	// RA generates nonce
 	nonce = generate_nonce(OPENSSL_CSPRNG_SIZE);
-	supnp_log("[*] Generated nonce: ");
+	supnp_log("Generated nonce: ");
 	print_as_hex(nonce, OPENSSL_CSPRNG_SIZE);
 
 	// RA encrypts the nonce with participant's public Key
 	enc_nonce = encrypt_asym(sd_pubkey, &enc_len, nonce, OPENSSL_CSPRNG_SIZE);
-	supnp_log("[*] Encrypted nonce: ");
+	supnp_log("Encrypted nonce: ");
 	print_as_hex(enc_nonce, enc_len);
 
 	// Participant decrypts the challenge with its private key
 	dec_nonce = decrypt_asym(sd_prikey, &dec_len, enc_nonce, enc_len);
-	supnp_log("[*] Decrypted nonce: ");
+	supnp_log("Decrypted nonce: ");
 	print_as_hex(dec_nonce, dec_len);
 
 	// Participant hash the decrypted n once
 	do_sha256(nonce, OPENSSL_CSPRNG_SIZE, hash);
-	supnp_log("[*] Hash(nonce): ");
+	supnp_log("Hash(nonce): ");
 	print_as_hex(hash, SHA256_DIGEST_LENGTH);
 	
 	// Participant encrypts the nonce hash with its private key
 	enc_hash = encrypt_asym(sd_prikey, &ehash_len, hash, SHA256_DIGEST_LENGTH);
-	supnp_log("[*] Encrypted Hash(nonce): ");
+	supnp_log("Encrypted Hash(nonce): ");
 	print_as_hex(enc_hash, SHA256_DIGEST_LENGTH);
 
 	// RA Decrypts encrypted hash with public key
 	dec_hash = decrypt_asym(sd_prikey, &dhash_len, enc_hash, ehash_len);
-	supnp_log("[*] Decrypted Hash(nonce): ");
+	supnp_log("Decrypted Hash(nonce): ");
 	print_as_hex(dec_hash, SHA256_DIGEST_LENGTH);
 
 	// RA Verifies the hashes are the same
@@ -281,8 +278,8 @@ int test_nonce_encryption()
 	freeif(dec_nonce);
 	freeif(enc_nonce);
 	freeif(nonce);
-	EVP_PKEY_free(sd_prikey);
-	EVP_PKEY_free(sd_pubkey);
+	freeif2(sd_prikey, EVP_PKEY_free);
+	freeif2(sd_pubkey, EVP_PKEY_free);
 	return ret;
 }
 

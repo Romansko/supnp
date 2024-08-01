@@ -99,18 +99,35 @@ extern "C" {
 
 /**
  * Internal verification macro
- * @param cleaner cleanup function. Leave Empty if no cleanup is required.
- * @param cond condition to check
- * @param ret return value on failure
+ * @param test condition to check
+ * @note must define 'cleanup' label
  */
-#define supnp_verify(cleaner, cond, ret, ...) { \
-    if (!(cond)) { \
+#define supnp_verify(test, ...) { \
+    if (!(test)) { \
         supnp_error(__VA_ARGS__); \
-        cleaner; \
-        return ret; \
+        goto cleanup; \
     } \
  }
 
+/**
+ * Free a pointer if it is not NULL
+ * @param ptr
+ */
+#define freeif(ptr) { \
+    freeif2(ptr, free); \
+}
+
+/**
+ * Free a ponter if it is not NULL with a given function
+ * @param ptr pointer to free
+ * @param func function to free pointer
+ */
+#define freeif2(ptr, free_func) { \
+    if (ptr != NULL) { \
+        free_func(ptr); \
+        ptr = NULL; \
+    } \
+}
 
 #ifdef __cplusplus
 }

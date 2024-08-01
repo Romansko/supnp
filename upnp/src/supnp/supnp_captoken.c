@@ -14,6 +14,7 @@
 #include "supnp_err.h"
 #include "openssl_wrapper.h"
 #include <openssl/evp.h>
+#include <openssl/sha.h>     /* For SHA256_DIGEST_LENGTH  */
 #include <stdlib.h>
 #include <string.h>
 
@@ -26,53 +27,62 @@ extern "C" {
 
 uint32_t random_id()
 {
+    uint32_t id = 0;
     unsigned char *nonce = generate_nonce(sizeof(uint32_t));
-    supnp_verify(, (nonce != NULL), 0, "generate_nonce failed\n");
-    uint32_t id = *(uint32_t *)nonce;
-    free(nonce);
+    supnp_verify(nonce != NULL, "generate_nonce failed\n");
+    id = *(uint32_t *)nonce;
+cleanup:
+    freeif(nonce);
     return id;
 }
 
 
-sd_cap_token_t *generate_cap_token_sd(device_info_t *info, EVP_PKEY *ra_pkey)
+cap_token_t *generate_cap_token_sd(device_info_t *info, EVP_PKEY *ra_pkey)
 {
     // todo verify device_info
-
     int ret;
-    sd_cap_token_t *cap_token = NULL;
-    supnp_verify(, (info != NULL), NULL, "NULL sd_info\n");
-    supnp_verify(, (ra_pkey != NULL), NULL, "NULL ra_pkey\n");
+    cap_token_t *cap_token = NULL;
+    unsigned char * uri_hash = NULL;
 
-    cap_token = (sd_cap_token_t *)malloc(sizeof(sd_cap_token_t));
-    supnp_verify(, (cap_token != NULL), NULL, "malloc failed\n");
 
-    cap_token->id = random_id();
-    supnp_verify(free(cap_token),
-        (cap_token->id != 0),
-        NULL,
-        "random_id failed\n");
+    supnp_verify(info != NULL, "NULL sd_info\n");
+    supnp_verify(ra_pkey != NULL, "NULL ra_pkey\n");
 
-    cap_token->ra_pk = public_key_to_bytes(ra_pkey, &ret);
-    supnp_verify(free(cap_token),
-        (cap_token->ra_pk != NULL),
-        NULL,
-        "public_key_to_bytes failed\n");
+    cap_token = (cap_token_t *)malloc(sizeof(cap_token_t));
+    supnp_verify(cap_token != NULL, "malloc failed\n");
+
+    cap_token->ID = random_id();
+    supnp_verify(cap_token->ID != 0, "random_id failed\n");
+
+    cap_token->RA_PK = public_key_to_bytes(ra_pkey, &ret);
+    supnp_verify(cap_token->RA_PK != NULL, "public_key_to_bytes failed\n");
 
     /**
      * For each service in service_list do
      *   service_sig = sign(sk_pk, hash(service.description));
      *   capt_token.add_Service(service_sig, service_type);
      */
+    uri_hash = calloc(SHA256_DIGEST_LENGTH, 1);
+    supnp_verify(cap_token->DESC_SIG != NULL, "DESC_SIG calloc failed\n");
+    ret = do_sha256((const unsigned char *)info->desc_doc_uri, strlen(info->desc_doc_uri), uri_hash);
 
-    // do_sha256(info->desc_doc_uri, strlen(info->desc_doc_uri),
+
+    // ret == ok
+    cap_token->DESC_SIG = uri_hash;
+
+cleanup:
+    freeif(cap_token);
+    freeif(uri_hash);
+
+success:
 
     return cap_token;
 }
 
-cp_cap_token_t* generate_cap_token_cp(device_info_t* info, EVP_PKEY *ra_pkey)
+cap_token_t* generate_cap_token_cp(device_info_t* info, EVP_PKEY *ra_pkey)
 {
     int ret;
-    cp_cap_token_t *cap_token = NULL;
+    cap_token_t *cap_token = NULL;
 
     // todo verify device_info
 
