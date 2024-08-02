@@ -100,22 +100,14 @@ extern "C" {
 /**
  * Internal verification macro
  * @param test condition to check
- * @note must define 'cleanup' label
+ * @param label label to jump to in case of failure
  */
-#define supnp_verify(test, ...) { \
+#define supnp_verify(test, label, ...) { \
     if (!(test)) { \
         supnp_error(__VA_ARGS__); \
-        goto cleanup; \
+        goto label; \
     } \
  }
-
-/**
- * Free a pointer if it is not NULL
- * @param ptr
- */
-#define freeif(ptr) { \
-    freeif2(ptr, free); \
-}
 
 /**
  * Free a ponter if it is not NULL with a given function
@@ -127,6 +119,14 @@ extern "C" {
         free_func(ptr); \
         ptr = NULL; \
     } \
+}
+
+/**
+ * Free a pointer if it is not NULL
+ * @param ptr
+ */
+#define freeif(ptr) { \
+    freeif2(ptr, free); \
 }
 
 #ifdef __cplusplus

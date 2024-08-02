@@ -29,10 +29,10 @@ extern "C" {
 #endif
 
 
-#define supnp_extract_json_string(doc, key, value) \
+#define supnp_extract_json_string(doc, key, value, label) \
 { \
 	value = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(doc, key)); \
-	supnp_verify(value != NULL, "Unexpected '%s'\n", key); \
+	supnp_verify(value != NULL, label, "Unexpected '%s'\n", key); \
 }
 
 /**
@@ -42,7 +42,7 @@ extern "C" {
 int SUpnpInit()
 {
 	supnp_log("Initializing SUPnP secure layer.\n");
-	supnp_verify(init_openssl_wrapper() == OPENSSL_SUCCESS, "Error initializing OpenSSL.\n");
+	supnp_verify(init_openssl_wrapper() == OPENSSL_SUCCESS, cleanup, "Error initializing OpenSSL.\n");
     return SUPNP_E_SUCCESS;
 cleanup:
 	return SUPNP_E_INTERNAL_ERROR;
@@ -69,45 +69,45 @@ int verify_supnp_document(const cJSON* supnp_document, EVP_PKEY * ca_pkey, X509 
 
 	/* Arguments Verification */
     ret = SUPNP_E_INVALID_ARGUMENT;
-	supnp_verify(supnp_document != NULL, "Empty DSD / SAD document provided\n");
-	supnp_verify(ca_pkey != NULL, "Empty CA public key provided\n");
-	supnp_verify(uca_cert != NULL, "Empty UCA Certificate provided\n");
-	supnp_verify(device_cert != NULL, "Empty Device Certificate provided\n");
+	supnp_verify(supnp_document != NULL, cleanup, "Empty DSD / SAD document provided\n");
+	supnp_verify(ca_pkey != NULL, cleanup, "Empty CA public key provided\n");
+	supnp_verify(uca_cert != NULL, cleanup, "Empty UCA Certificate provided\n");
+	supnp_verify(device_cert != NULL, cleanup, "Empty Device Certificate provided\n");
 
 	/* Read SUPnP document name & type */
     ret = SUPNP_E_INVALID_DOCUMENT;
-	supnp_extract_json_string(supnp_document, SUPNP_DOC_NAME, device_name);
-	supnp_extract_json_string(supnp_document, SUPNP_DOC_TYPE, device_type);
+	supnp_extract_json_string(supnp_document, SUPNP_DOC_NAME, device_name, cleanup);
+	supnp_extract_json_string(supnp_document, SUPNP_DOC_TYPE, device_type, cleanup);
 	supnp_log("Verifying '%s' document. Type: '%s'.\n", device_name, device_type);
 
 	/* Verify UCA Certificate */
     ret = SUPNP_E_INVALID_CERTIFICATE;
-	supnp_verify(verify_certificate("UCA", uca_cert, ca_pkey) == OPENSSL_SUCCESS, "Invalid UCA Certificate\n");
+	supnp_verify(verify_certificate("UCA", uca_cert, ca_pkey) == OPENSSL_SUCCESS, cleanup, "Invalid UCA Certificate\n");
 
 	/* Extract UCA Public Key && Verify Device Certificate */
 	EVP_PKEY * uca_pk = X509_get_pubkey(uca_cert);
-	supnp_verify(verify_certificate(device_name, device_cert, uca_pk) == OPENSSL_SUCCESS, "Invalid Device Certificate.\n");
+	supnp_verify(verify_certificate(device_name, device_cert, uca_pk) == OPENSSL_SUCCESS, cleanup, "Invalid Device Certificate.\n");
 
 	/* Extract Device Public Key */
 	EVP_PKEY * device_pkey = X509_get_pubkey(device_cert);
 
 	/* Verify Device Public Key */
     ret = SUPNP_E_INVALID_DOCUMENT;
-	supnp_extract_json_string(supnp_document, SUPNP_DOC_PUBLIC_KEY, in_doc_pkey);
+	supnp_extract_json_string(supnp_document, SUPNP_DOC_PUBLIC_KEY, in_doc_pkey, cleanup);
 	EVP_PKEY * doc_pk = load_public_key_from_hex(in_doc_pkey);
-	supnp_verify(doc_pk != NULL, "Error loading public key from '%s'.\n", SUPNP_DOC_PUBLIC_KEY);
-	supnp_verify(EVP_PKEY_eq(doc_pk, device_pkey) == OPENSSL_SUCCESS, "Document's device public key doesn't match Device ceretificate's public key.\n");
+	supnp_verify(doc_pk != NULL, cleanup, "Error loading public key from '%s'.\n", SUPNP_DOC_PUBLIC_KEY);
+	supnp_verify(EVP_PKEY_eq(doc_pk, device_pkey) == OPENSSL_SUCCESS, cleanup, "Document's device public key doesn't match Device ceretificate's public key.\n");
 
 	/* Retrieve signature verification conditions */
-	supnp_extract_json_string(supnp_document, SUPNP_DOC_SIG_CON, sig_ver_con);
-	supnp_verify(sscanf(sig_ver_con, "%d-of-%d", &x, &y) == 2, "Error parsing Signature Verification Conditions '%s'.\n", SUPNP_DOC_SIG_CON);
-	supnp_verify(x >= 0 && y >= 0 && x <= y, "Invalid Signature Verification Conditions '%s'.\n", SUPNP_DOC_SIG_CON);
+	supnp_extract_json_string(supnp_document, SUPNP_DOC_SIG_CON, sig_ver_con, cleanup);
+	supnp_verify(sscanf(sig_ver_con, "%d-of-%d", &x, &y) == 2, cleanup, "Error parsing Signature Verification Conditions '%s'.\n", SUPNP_DOC_SIG_CON);
+	supnp_verify(x >= 0 && y >= 0 && x <= y, cleanup, "Invalid Signature Verification Conditions '%s'.\n", SUPNP_DOC_SIG_CON);
 	supnp_log("Signature Verification Conditions: %d-of-%d\n", x, y);
 
 	/* Retrieve Signatures */
 	const cJSON* sigs = cJSON_GetObjectItemCaseSensitive(supnp_document, SUPNP_DOC_SIGNATURES);
-	supnp_verify(cJSON_IsArray(sigs), "Unexpected '%s'\n", SUPNP_DOC_SIGNATURES);
-	supnp_verify(cJSON_GetArraySize(sigs) == y, "Unexpected number of signatures in '%s'\n", SUPNP_DOC_SIGNATURES);
+	supnp_verify(cJSON_IsArray(sigs), cleanup, "Unexpected '%s'\n", SUPNP_DOC_SIGNATURES);
+	supnp_verify(cJSON_GetArraySize(sigs) == y, cleanup, "Unexpected number of signatures in '%s'\n", SUPNP_DOC_SIGNATURES);
 	if (x == 0) {
 	    ret = SUPNP_E_SUCCESS;
 		supnp_log("Signatures verification is not required.\n");
