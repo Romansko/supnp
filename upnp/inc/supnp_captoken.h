@@ -13,7 +13,9 @@
 #include "UpnpGlobal.h" /* for UPNP_EXPORT_SPEC */
 #include "upnpconfig.h"
 #include "stdint.h"
-#include <openssl/types.h>
+
+/* Forward decleration <openssl/types.h> */
+typedef struct evp_pkey_st EVP_PKEY;
 
 #ifdef ENABLE_SUPNP
 

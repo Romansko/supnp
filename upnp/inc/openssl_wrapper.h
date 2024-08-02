@@ -12,13 +12,15 @@
 
 #include "UpnpGlobal.h" /* for UPNP_EXPORT_SPEC */
 #include "upnpconfig.h"
+#include <stddef.h>
 
 #ifdef UPNP_ENABLE_OPEN_SSL
 
-#define OPENSSL_API_COMPAT 30000 /* OpenSSL 3.0.0 */
+/* Forward decleration <openssl/types.h> */
+typedef struct evp_pkey_st EVP_PKEY;
+typedef struct x509_st X509;
 
-#include <stddef.h>
-#include <openssl/types.h>
+#define OPENSSL_API_COMPAT 30000 /* OpenSSL 3.0.0 */
 
 #ifdef __cplusplus
 extern "C" {

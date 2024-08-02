@@ -18,7 +18,9 @@
 
 #ifdef ENABLE_SUPNP
 
-#include <openssl/types.h>
+/* Forward decleration <openssl/types.h> */
+typedef struct evp_pkey_st EVP_PKEY;
+typedef struct x509_st X509;
 
 #ifdef __cplusplus
 extern "C" {
