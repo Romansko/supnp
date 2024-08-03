@@ -2,11 +2,13 @@
 #define FILE_UTILS_H
 
 #include "UpnpGlobal.h" /* for UPNP_EXPORT_SPEC */
+#include <stddef.h>
+#include <stdio.h>
 
 #ifdef _WIN32
-#define macro_fopen(fp, filepath, mode) fopen_s(&fp, filepath, mode)
+#define _fopen(fp, filepath, mode) fopen_s(&fp, filepath, mode)
 #else
-#define macro_fopen(fp, filepath, mode) fp = fopen(filepath, mode)
+#define _fopen(fp, filepath, mode) fp = fopen(filepath, mode)
 #endif
 
 /**
@@ -22,7 +24,7 @@
         printf("[File Error] %s:%s(%d): Empty filepath provided.\n", __FILE__, __func__, __LINE__); \
 	    goto label; \
     } \
-    macro_fopen(fp, filepath, mode); \
+    _fopen(fp, filepath, mode); \
     if (fp == NULL) { \
         printf("[File Error] %s:%s(%d): Error opening file: %s\n", __FILE__, __func__, __LINE__, filepath); \
         goto label; \
@@ -41,7 +43,23 @@
     } \
 }
 
-UPNP_EXPORT_SPEC char* read_file(const char* filepath, const char* mode);
+/*!
+ * \brief Retrieve file size.
+ *
+ * \param fp file pointer.
+ *
+ * \return file size.
+ */
+UPNP_EXPORT_SPEC size_t get_file_size(FILE* fp);
+
+/*!
+ * \brief Read file content.
+ *
+ * \Note Remember to free the returned pointer.
+ *
+ * \return file content on success, NULL on failure.
+ */
+UPNP_EXPORT_SPEC char* read_file(const char* filepath, const char* mode, size_t * file_size);
 
 
 #endif //FILE_UTILS_H

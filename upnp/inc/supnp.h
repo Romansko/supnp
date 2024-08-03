@@ -28,7 +28,7 @@ extern "C" {
 
 
 /* Forward declaration */
-typedef struct cJSON cJSON; 
+typedef struct cJSON cJSON;
 
 /*!
  * \name SUPnP Document keys
@@ -114,11 +114,13 @@ UPNP_EXPORT_SPEC int SUpnpInit();
  *
  * \return SUPNP_E_SUCCESS on success, SUPNP_E_INVALID_CERTIFICATE on failure.
  */
-UPNP_EXPORT_SPEC int verify_supnp_document(const cJSON* supnp_document, EVP_PKEY * ca_pkey, X509 * uca_cert, X509 * device_cert);
+UPNP_EXPORT_SPEC int verify_supnp_document(const cJSON* supnp_document, EVP_PKEY* ca_pkey, X509* uca_cert, X509* device_cert);
 
 /* Temporary function for testing */
 UPNP_EXPORT_SPEC int test_supnp_ducuments();
 UPNP_EXPORT_SPEC int test_nonce_encryption();
+UPNP_EXPORT_SPEC int test_captoken();
+
 UPNP_EXPORT_SPEC void SUpnp_test_registration();
 /**/
 

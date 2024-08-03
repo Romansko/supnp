@@ -107,7 +107,19 @@ extern "C" {
         supnp_error(__VA_ARGS__); \
         goto label; \
     } \
- }
+}
+
+
+/**
+ * Free a pointer if it is not NULL
+ * @param ptr
+ */
+#define freeif(ptr) { \
+    if (ptr != NULL) { \
+        free(ptr); \
+        ptr = NULL; \
+    } \
+}
 
 /**
  * Free a ponter if it is not NULL with a given function
@@ -119,14 +131,6 @@ extern "C" {
         free_func(ptr); \
         ptr = NULL; \
     } \
-}
-
-/**
- * Free a pointer if it is not NULL
- * @param ptr
- */
-#define freeif(ptr) { \
-    freeif2(ptr, free); \
 }
 
 #ifdef __cplusplus

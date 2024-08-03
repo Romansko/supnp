@@ -16,11 +16,11 @@
 
 #ifdef UPNP_ENABLE_OPEN_SSL
 
+#define OPENSSL_API_COMPAT 30000 /* OpenSSL 3.0.0 */
+
 /* Forward decleration <openssl/types.h> */
 typedef struct evp_pkey_st EVP_PKEY;
 typedef struct x509_st X509;
-
-#define OPENSSL_API_COMPAT 30000 /* OpenSSL 3.0.0 */
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,7 +42,7 @@ UPNP_EXPORT_SPEC int init_openssl_wrapper();
 /*!
  * \brief print data as hex.
  */
-UPNP_EXPORT_SPEC void print_as_hex(const unsigned char *data, int len);
+UPNP_EXPORT_SPEC void print_as_hex(const unsigned char* data, int len);
 
 /*!
  * \brief convert binary data to hex string.
@@ -51,7 +51,7 @@ UPNP_EXPORT_SPEC void print_as_hex(const unsigned char *data, int len);
  *
  * \return pointer on success, NULL on failure.
  */
-UPNP_EXPORT_SPEC unsigned char * hex_string_to_binary(const char* hex, size_t * dsize);
+UPNP_EXPORT_SPEC unsigned char* hex_string_to_binary(const char* hex, size_t* dsize);
 
 /*!
  * \brief Load a public key from hex string.
@@ -60,7 +60,7 @@ UPNP_EXPORT_SPEC unsigned char * hex_string_to_binary(const char* hex, size_t * 
  *
  * \return EVP_PKEY* on success, NULL on failure.
  */
-UPNP_EXPORT_SPEC EVP_PKEY * load_public_key_from_hex(const char* hex);
+UPNP_EXPORT_SPEC EVP_PKEY* load_public_key_from_hex(const char* hex);
 
 /*!
  * \brief Convert public key to bytes.
@@ -69,7 +69,7 @@ UPNP_EXPORT_SPEC EVP_PKEY * load_public_key_from_hex(const char* hex);
  *
  * \return pointer to public key bytes on success, NULL on failure.
  */
-UPNP_EXPORT_SPEC unsigned char * public_key_to_bytes(const EVP_PKEY *public_key, int* size);
+UPNP_EXPORT_SPEC unsigned char* public_key_to_bytes(EVP_PKEY* public_key, size_t* p_key_size);
 
 /*!
  * \brief Convert private key to bytes.
@@ -78,7 +78,7 @@ UPNP_EXPORT_SPEC unsigned char * public_key_to_bytes(const EVP_PKEY *public_key,
  *
  * \return pointer to private key bytes on success, NULL on failure.
  */
-UPNP_EXPORT_SPEC unsigned char * private_key_to_bytes(const EVP_PKEY *private_key, int* size);
+UPNP_EXPORT_SPEC unsigned char* private_key_to_bytes(EVP_PKEY* private_key, size_t* p_key_size);
 
 /*!
  * \brief Load a public key from PEM file.
@@ -87,7 +87,7 @@ UPNP_EXPORT_SPEC unsigned char * private_key_to_bytes(const EVP_PKEY *private_ke
  *
  * \return EVP_PKEY* on success, NULL on failure.
  */
-UPNP_EXPORT_SPEC EVP_PKEY * load_public_key_from_pem(const char* pem_file_path);
+UPNP_EXPORT_SPEC EVP_PKEY* load_public_key_from_pem(const char* pem_file_path);
 
 /*!
  * \brief Load a private key from PEM file.
@@ -96,7 +96,7 @@ UPNP_EXPORT_SPEC EVP_PKEY * load_public_key_from_pem(const char* pem_file_path);
  *
  * \return EVP_PKEY* on success, NULL on failure.
  */
-UPNP_EXPORT_SPEC EVP_PKEY * load_private_key_from_pem(const char* pem_file_path);
+UPNP_EXPORT_SPEC EVP_PKEY* load_private_key_from_pem(const char* pem_file_path);
 
 /*!
  * \brief Load a certificate from PEM file.
@@ -105,21 +105,22 @@ UPNP_EXPORT_SPEC EVP_PKEY * load_private_key_from_pem(const char* pem_file_path)
  *
  * \return X509 * certificate on success, NULL on failure.
  */
-UPNP_EXPORT_SPEC X509 * load_certificate_from_pem(const char* pem_file_path);
+UPNP_EXPORT_SPEC X509* load_certificate_from_pem(const char* pem_file_path);
 
 /*!
  * \brief Verify certificate.
  *
  * \return OPENSSL_SUCCESS on success, OPENSSL_FAILURE on failure.
  */
-UPNP_EXPORT_SPEC int verify_certificate(const char * cert_name, X509 *cert, EVP_PKEY *pkey);
+UPNP_EXPORT_SPEC int verify_certificate(const char* cert_name, X509* cert, EVP_PKEY* pkey);
 
 /*!
  * \brief Load a certificate from hex string.
  *
  * \return OPENSSL_SUCCESS on success, OPENSSL_FAILURE on failure.
  */
-UPNP_EXPORT_SPEC int verify_signature(const char* sig_name, EVP_PKEY *pkey, const char *hex_sig, const unsigned char *data, const size_t dsize);
+UPNP_EXPORT_SPEC int verify_signature(const char* sig_name, EVP_PKEY* pkey, const char* hex_sig,
+                                      const unsigned char* data, const size_t dsize);
 
 /*!
  * \brief Encrypt data
@@ -128,7 +129,8 @@ UPNP_EXPORT_SPEC int verify_signature(const char* sig_name, EVP_PKEY *pkey, cons
  *
  * \return pointer to encrypted data on success, NULL on failure.
  */
-UPNP_EXPORT_SPEC unsigned char * encrypt_sym(const unsigned char * pkey, int * enc_size, const unsigned char * data, size_t dsize);
+UPNP_EXPORT_SPEC unsigned char* encrypt_sym(const unsigned char* pkey, int* p_enc_size, const unsigned char* data,
+                                            size_t dsize);
 
 /*!
  * \brief Decrypt data
@@ -137,7 +139,8 @@ UPNP_EXPORT_SPEC unsigned char * encrypt_sym(const unsigned char * pkey, int * e
  *
  * \return pointer to decrypted data on success, NULL on failure.
  */
-UPNP_EXPORT_SPEC unsigned char * decrypt_sym(const unsigned char * pkey, int * dec_size, const unsigned char * encrypted, size_t enc_size);
+UPNP_EXPORT_SPEC unsigned char* decrypt_sym(const unsigned char* pkey, int* p_enc_size, const unsigned char* encrypted,
+                                            size_t enc_size);
 
 /*!
  * \brief Encrypt data using asymmetric key
@@ -146,7 +149,8 @@ UPNP_EXPORT_SPEC unsigned char * decrypt_sym(const unsigned char * pkey, int * d
  *
  * \return pointer to encrypted data on success, NULL on failure.
  */
-UPNP_EXPORT_SPEC unsigned char * encrypt_asym(EVP_PKEY* pkey, size_t * enc_size, const unsigned char * data, size_t dsize);
+UPNP_EXPORT_SPEC unsigned char* encrypt_asym(EVP_PKEY* pkey, size_t* p_enc_size, const unsigned char* data,
+                                             size_t dsize);
 
 /*!
  * \brief Decrypt data using asymmetric key
@@ -155,7 +159,8 @@ UPNP_EXPORT_SPEC unsigned char * encrypt_asym(EVP_PKEY* pkey, size_t * enc_size,
  *
  * \return pointer to decrypted data on success, NULL on failure.
  */
-UPNP_EXPORT_SPEC unsigned char * decrypt_asym(EVP_PKEY* pkey, size_t * enc_size, const unsigned char * data, size_t dsize);
+UPNP_EXPORT_SPEC unsigned char* decrypt_asym(EVP_PKEY* pkey, size_t* p_dec_size, const unsigned char* data,
+                                             size_t dsize);
 
 /*!
  * \brief Generate a nonce.
@@ -164,14 +169,23 @@ UPNP_EXPORT_SPEC unsigned char * decrypt_asym(EVP_PKEY* pkey, size_t * enc_size,
  *
  * \return a nonce on success, NULL on failure.
  */
-UPNP_EXPORT_SPEC unsigned char * generate_nonce(size_t nonce_size);
+UPNP_EXPORT_SPEC unsigned char* generate_nonce(size_t nonce_size);
 
 /*!
  * \brief Calcualte SHA256 hash.
  *
  * \return OPENSSL_SUCCESS on success, OPENSSL_FAILURE on failure.
  */
-int do_sha256(const unsigned char *data, size_t dsize, unsigned char hash[]);
+UPNP_EXPORT_SPEC int do_sha256(unsigned char* hash, const unsigned char* data, size_t dsize);
+
+/*!
+ * \brief Sign data.
+ *
+ * \note Remember to free the returned pointer.
+ *
+ * \return pointer to signature on success, NULL on failure.
+ */
+UPNP_EXPORT_SPEC unsigned char* sign(EVP_PKEY* pkey, const unsigned char* data, size_t dsize);
 
 #ifdef __cplusplus
 }

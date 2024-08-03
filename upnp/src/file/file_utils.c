@@ -1,6 +1,4 @@
 #include "file_utils.h"
-
-#include <stdio.h>
 #include <stdlib.h>
 
 /**
@@ -43,44 +41,65 @@
 }
 
 /**
- *
+ * Return file size
+ * @param fp file pointer
+ * @return file size
+ */
+size_t get_file_size(FILE *fp)
+{
+    size_t size = 0;
+    file_verify(fp != NULL, error, "File pointer is NULL\n");
+    fseek(fp, 0, SEEK_END);
+    size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+error:
+    return size;
+}
+
+/**
+ * Read file content
  * @param filepath given file path to read
  * @param mode file mode to open
- * @return
+ * @param file_size Optional argument to update file size
+ * @return file content
  */
-char *read_file(const char *filepath, const char *mode)
+char *read_file(const char *filepath, const char *mode, size_t * file_size)
 {
+    size_t size = 0;
     char *content = NULL;
-    FILE *fp = fopen(filepath, mode);
-    file_verify(fp != NULL, error, "Error opening file: %s\n", filepath);
+    FILE *fp = NULL;
 
-    // Get the file size
-    fseek(fp, 0, SEEK_END);
-    long file_size = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
+    // Open file
+    macro_file_open(fp, filepath, mode, error);
 
-    // Allocate a buffer
-    content = (char *)malloc(file_size + 1);
+    // Retrieve file size
+    size = get_file_size(fp);
+    file_verify(size > 0,
+        error,
+        "Error getting file size for file %s\n",
+        filepath);
+
+    // Allocate memory for file content
+    content = (char *)malloc(size);
     file_verify(content != NULL,
         error,
         "Error allocating memory for file %s\n",
         filepath);
 
-    // Read the file content
-    const size_t bytes_read = fread(content, file_size, 1, fp);
-
-    // Verify single chunck was read
-    file_verify(bytes_read == 1, error, "Error reading file %s\n", filepath);
+    // Verify whole file was read
+    file_verify(fread(content, sizeof(char), size, fp) == size,
+        error,
+        "Error reading file %s\n",
+        filepath);
     goto success;
 
 error:
     file_freeif(content);
 
 success:
-    if (fp) {
-        fclose(fp);
-        fp = NULL;
-    }
+    if (file_size != NULL)
+        *file_size = size;
+    macro_file_close(fp);
     return content; /* remember to free(content) */
 }
 
