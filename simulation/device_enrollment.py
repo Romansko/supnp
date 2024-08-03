@@ -43,7 +43,6 @@ from dataclasses import dataclass
 
 # Constants
 # See @CryptoHelper for more crypto related constants.
-ENTITIES = [ 'CP', 'SD', 'UCA', 'CA' ]
 JSON_INDENT = 4
 CERTIFICATE_VALIDITY_DAYS = 365
 
@@ -93,8 +92,6 @@ class Details:
 class Entity:
     """ Helper class for entities """
     def __init__(self, type: str) -> None:
-        if type not in ENTITIES:
-            error("Invalid entity type '%s'. Must be one of %s" % (type, ENTITIES))
         self.type: str = type
         print("[*] Initializing %s.." % self)
         os.makedirs(type, exist_ok=True)
@@ -105,10 +102,8 @@ class Entity:
         self.subject: x509.Name = self.generate_subject()
         self.ca = False
     
-    @abstractmethod
     def generate_subject(self) -> x509.Name:
-        """ Generate subject name for certificate """
-        raise NotImplementedError("generate_subject is not implemented.")
+        return None
       
     def __str__(self) -> str:
         return self.type
@@ -444,6 +439,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("devicedesc_xml", help="UPnP XML Description Document filepath.")
     device = Device(parser.parse_args().devicedesc_xml)
+    ra  = Entity('RA')   # For Private & Public keys
     ca  = CA()
     uca = UCA()
     uca.cert = CryptoHelper.issue_certificate(ca, uca)

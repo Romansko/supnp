@@ -1,6 +1,6 @@
 # For manual usage, use "source venv/bin/activate" after venv is set.
 
-ENTITIES := CA UCA CP SD
+ENTITIES := CA CP RA SD UCA 
 
 # Fully automate venv installation & artifacts generation using libupnp sample.
 .PHONY: sample
