@@ -42,7 +42,16 @@ UPNP_EXPORT_SPEC int init_openssl_wrapper();
 /*!
  * \brief print data as hex.
  */
-UPNP_EXPORT_SPEC void print_as_hex(const unsigned char* data, int len);
+UPNP_EXPORT_SPEC void print_as_hex(const unsigned char* data, size_t len);
+
+/*!
+ * \brief convert binary data to hex string.
+ *
+ * \note Remember to free the returned pointer.
+ *
+ * \return pointer on success, NULL on failure.
+ */
+UPNP_EXPORT_SPEC char * binary_to_hex_string(const unsigned char* data, size_t dsize);
 
 /*!
  * \brief convert binary data to hex string.

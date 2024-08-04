@@ -27,7 +27,7 @@ extern "C" {
 #endif
 
 // Obviously change in your apps..
-const unsigned char *IV = "SUPNP_CHANGE_IV!"; /* 16 bytes IV for AES-256-CBC */
+const char *IV = "SUPNP_CHANGE_IV!"; /* 16 bytes IV for AES-256-CBC */
 
 /**
  * Returns the last OpenSSL error. No free is required.
@@ -43,7 +43,7 @@ const char *get_openssl_last_error()
 /**
  * Internal error logging macro
  */
-#define sslwrapper_error(...) { \
+#define w_error(...) { \
 	fprintf(stderr, "[SSL_W Error] %s::%s(%d): ", __FILE__, __func__, __LINE__); \
 	fprintf(stderr, __VA_ARGS__); \
 	fprintf(stderr, "\t%s\n", get_openssl_last_error()); \
@@ -52,7 +52,7 @@ const char *get_openssl_last_error()
 /**
  * Internal message logging macro
  */
-#define sslwrapper_log(...) { \
+#define w_log(...) { \
 	fprintf(stdout, "[SSL_W]: "); \
 	fprintf(stdout, __VA_ARGS__); \
 }
@@ -62,9 +62,9 @@ const char *get_openssl_last_error()
  * @param test condition to check
  * @param label label to jump to in case of failure
  */
-#define sslwrapper_verify(test, label, ...) { \
+#define w_verify(test, label, ...) { \
 	if (!(test)) { \
-		sslwrapper_error(__VA_ARGS__); \
+		w_error(__VA_ARGS__); \
 		goto label; \
 	} \
 }
@@ -74,10 +74,11 @@ const char *get_openssl_last_error()
  * @param ptr pointer to free
  * @param free_func function to free pointer
  */
-#define sslwrapper_freeif(ptr, free_func) { \
-    if (ptr != NULL) \
+#define w_freeif(ptr, free_func) { \
+    if (ptr != NULL) { \
         free_func(ptr); \
         ptr = NULL; \
+    } \
 }
 
 /**
@@ -86,7 +87,7 @@ const char *get_openssl_last_error()
  */
 int init_openssl_wrapper()
 {
-    sslwrapper_log("Initializing OpenSSL Wrapper..\n");
+    w_log("Initializing OpenSSL Wrapper..\n");
     SSL_load_error_strings();
     SSL_library_init();
     OpenSSL_add_all_algorithms();
@@ -98,7 +99,7 @@ int init_openssl_wrapper()
  * @param data binary data
  * @param len data length
  */
-void print_as_hex(const unsigned char *data, const int len)
+void print_as_hex(const unsigned char *data, const size_t len)
 {
     if (data == NULL)
         return;
@@ -109,6 +110,28 @@ void print_as_hex(const unsigned char *data, const int len)
 }
 
 /**
+ * Convert binary data to hex string.
+ * @param data binary data
+ * @param dsize the size of the data
+ * @return hex string on success, NULL on failure
+ */
+char *binary_to_hex_string(const unsigned char *data, const size_t dsize)
+{
+    char *hex = NULL;
+    w_verify(data, cleanup, "NULL data provided.\n");
+    w_verify(dsize > 0, cleanup, "Invalid data size.\n");
+    hex = malloc(dsize * 2 + 1);
+    w_verify(hex, cleanup, "Error allocating memory for hex string.\n");
+    for (size_t i = 0; i < dsize; ++i) {
+        sprintf(hex + (i * 2), "%02x", data[i]);
+    }
+    hex[dsize * 2] = '\0';
+cleanup:
+    return hex; /* remember to free(hex); */
+}
+
+
+/**
  * Convert a hex string to binary.
  * @param hex a hex string
  * @param dsize the size of the returned binary data
@@ -117,17 +140,15 @@ void print_as_hex(const unsigned char *data, const int len)
 unsigned char *hex_string_to_binary(const char *hex, size_t *dsize)
 {
     unsigned char *binary = NULL;
-    sslwrapper_verify(hex != NULL, cleanup, "NULL hex string provided.\n");
-    sslwrapper_verify(dsize != NULL, cleanup, "NULL data size ptr.\n");
+    w_verify(hex, cleanup, "NULL hex string provided.\n");
+    w_verify(dsize, cleanup, "NULL data size ptr.\n");
     const size_t hex_len = strlen(hex);
     *dsize = hex_len / 2;
-    sslwrapper_verify((*dsize % 2 == 0) && (*dsize > 0),
+    w_verify((*dsize % 2 == 0) && (*dsize > 0),
         cleanup,
         "Invalid hex string length.\n");
     binary = malloc(*dsize);
-    sslwrapper_verify(binary != NULL,
-        cleanup,
-        "Error allocating memory for binary data.\n");
+    w_verify(binary, cleanup, "Error allocating memory for binary data.\n");
     for (size_t i = 0; i < hex_len; i += 2) {
         sscanf(hex + i, "%2hhx", &binary[i / 2]);
     }
@@ -147,14 +168,12 @@ EVP_PKEY *load_public_key_from_hex(const char *hex)
     EVP_PKEY *pubkey = NULL;
     size_t dsize = 0;
     unsigned char *bin = hex_string_to_binary(hex, &dsize);
-    sslwrapper_verify(bin != NULL,
-        cleanup,
-        "Error converting public key hex string.\n");
+    w_verify(bin, cleanup, "Error converting public key hex string.\n");
     const unsigned char *bin_copy = bin;
     pubkey = d2i_PUBKEY(NULL, &bin_copy, dsize);
     /* Use SubjectPublicKeyInfo format */
     free(bin);
-    sslwrapper_verify(pubkey != NULL, cleanup, "Error loading public key\n");
+    w_verify(pubkey, cleanup, "Error loading public key\n");
 cleanup:
     return pubkey; /* Remember to EVP_PKEY_free(pubkey); */
 }
@@ -171,11 +190,9 @@ unsigned char *public_key_to_bytes(EVP_PKEY *public_key, size_t *p_key_size)
 {
     size_t size = 0;
     unsigned char *buffer = NULL;
-    sslwrapper_verify(public_key != NULL,
-        cleanup,
-        "Empty public key provided.\n");
+    w_verify(public_key, cleanup, "Empty public key provided.\n");
     size = i2d_PUBKEY(public_key, &buffer);
-    sslwrapper_verify((size > 0) && (buffer != NULL),
+    w_verify((size > 0) && (buffer),
         cleanup,
         "Error converting public key to bytes.\n");
 cleanup:
@@ -195,11 +212,9 @@ unsigned char *private_key_to_bytes(EVP_PKEY *private_key, size_t *p_key_size)
 {
     size_t size = 0;
     unsigned char *buffer = NULL;
-    sslwrapper_verify(private_key != NULL,
-        cleanup,
-        "Empty private key provided.\n");
+    w_verify(private_key, cleanup, "Empty private key provided.\n");
     size = i2d_PrivateKey(private_key, &buffer);
-    sslwrapper_verify((size > 0) && (buffer != NULL),
+    w_verify((size > 0) && (buffer),
         cleanup,
         "Error converting private key to bytes.\n");
 cleanup:
@@ -207,7 +222,6 @@ cleanup:
         *p_key_size = size;
     return buffer; /* remember to free(buffer); */
 }
-
 
 /**
  * Load a public key from a PEM file.
@@ -221,7 +235,7 @@ EVP_PKEY *load_public_key_from_pem(const char *pem_file_path)
     FILE *fp = NULL;
     macro_file_open(fp, pem_file_path, "r", cleanup);
     loaded_key = PEM_read_PUBKEY(fp, NULL, NULL, NULL);
-    sslwrapper_verify(loaded_key != NULL,
+    w_verify(loaded_key,
         cleanup,
         "Error loading public key from PEM file %s\n",
         pem_file_path);
@@ -242,7 +256,7 @@ EVP_PKEY *load_private_key_from_pem(const char *pem_file_path)
     FILE *fp = NULL;
     macro_file_open(fp, pem_file_path, "r", cleanup);
     loaded_key = PEM_read_PrivateKey(fp, NULL, NULL, NULL);
-    sslwrapper_verify(loaded_key != NULL,
+    w_verify(loaded_key,
         cleanup,
         "Error loading private key from PEM file %s\n",
         pem_file_path);
@@ -263,7 +277,7 @@ X509 *load_certificate_from_pem(const char *pem_file_path)
     FILE *fp = NULL;
     macro_file_open(fp, pem_file_path, "r", cleanup);
     cert = PEM_read_X509(fp, NULL, NULL, NULL);
-    sslwrapper_verify(cert != NULL,
+    w_verify(cert,
         cleanup,
         "Error loading certificate from PEM file %s\n",
         pem_file_path);
@@ -283,12 +297,12 @@ cleanup:
 int verify_certificate(const char *cert_name, X509 *cert, EVP_PKEY *pkey)
 {
     int ret = OPENSSL_FAILURE;
-    sslwrapper_log("Verifying '%s''s certificate..\n", cert_name);
-    sslwrapper_verify(cert != NULL, cleanup, "Empty certificate provided.\n");
-    sslwrapper_verify(pkey != NULL, cleanup, "Empty CA public key provided.\n");
+    w_log("Verifying '%s''s certificate..\n", cert_name);
+    w_verify(cert, cleanup, "Empty certificate provided.\n");
+    w_verify(pkey, cleanup, "Empty CA public key provided.\n");
     ret = X509_verify(cert, pkey);
-    sslwrapper_verify(ret == OPENSSL_SUCCESS, cleanup, "verification error\n");
-    sslwrapper_log("'%s''s certificate is valid.\n", cert_name);
+    w_verify(ret == OPENSSL_SUCCESS, cleanup, "verification error\n");
+    w_log("'%s''s certificate is valid.\n", cert_name);
 cleanup:
     return ret;
 }
@@ -309,38 +323,34 @@ int verify_signature(const char *sig_name,
     const size_t dsize)
 {
     int ret = OPENSSL_FAILURE;
+    unsigned char *sig = NULL;
     EVP_MD_CTX *ctx = NULL;
     size_t sig_size = 0;
-    sslwrapper_log("Verifying '%s''s signature..\n", sig_name);
+    w_log("Verifying '%s''s signature..\n", sig_name);
 
     // Arguments Verification
-    sslwrapper_verify(pkey != NULL, cleanup, "NULL public key provided.\n");
-    sslwrapper_verify(hex_sig != NULL, cleanup, "NULL signature provided.\n");
-    sslwrapper_verify(data != NULL, cleanup, "NULL data provided.\n");
-    sslwrapper_verify(dsize > 0, cleanup, "Invalid data size provided.\n");
+    w_verify(pkey, cleanup, "NULL public key provided.\n");
+    w_verify(hex_sig, cleanup, "NULL signature provided.\n");
+    w_verify(data, cleanup, "NULL data provided.\n");
+    w_verify(dsize > 0, cleanup, "Invalid data size provided.\n");
 
     // Initialize context
     ctx = EVP_MD_CTX_new();
-    sslwrapper_verify(ctx != NULL,
-        cleanup,
-        "'%s': Error creating EVP_MD_CTX.\n",
-        sig_name);
+    w_verify(ctx, cleanup, "'%s': Error creating EVP_MD_CTX.\n", sig_name);
     ret = EVP_DigestVerifyInit(ctx, NULL, EVP_sha256(), NULL, pkey);
-    sslwrapper_verify(ret == OPENSSL_SUCCESS, cleanup, "'%s':", sig_name);
+    w_verify(ret == OPENSSL_SUCCESS, cleanup, "'%s':", sig_name);
     ret = EVP_DigestVerifyUpdate(ctx, data, dsize);
-    sslwrapper_verify(ret == OPENSSL_SUCCESS, cleanup, "'%s':", sig_name);
-    unsigned char *sig = hex_string_to_binary(hex_sig, &sig_size);
-    sslwrapper_verify(sig != NULL,
-        cleanup,
-        "Failed to convert hex signature to bytes.\n");
+    w_verify(ret == OPENSSL_SUCCESS, cleanup, "'%s':", sig_name);
+    sig = hex_string_to_binary(hex_sig, &sig_size);
+    w_verify(sig, cleanup, "Failed to convert hex signature to bytes.\n");
 
     // Verify signature
     ret = EVP_DigestVerifyFinal(ctx, sig, (strlen(hex_sig) / 2));
-    sslwrapper_verify(ret == OPENSSL_SUCCESS, cleanup, "'%s':", sig_name);
+    w_verify(ret == OPENSSL_SUCCESS, cleanup, "'%s':", sig_name);
 
 cleanup:
-    sslwrapper_freeif(ctx, EVP_MD_CTX_free);
-    sslwrapper_freeif(sig, free);
+    w_freeif(ctx, EVP_MD_CTX_free);
+    w_freeif(sig, free);
 
     return ret;
 }
@@ -360,31 +370,32 @@ unsigned char *encrypt_sym(const unsigned char *pkey,
     const unsigned char *data,
     size_t dsize)
 {
+    const unsigned char *_IV = (const unsigned char *)IV; /* Change IV */
     unsigned char *encrypted = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
     int final_len = 0; /* Only for final stage encyption */
     unsigned char buffer[1024];
 
     // Verify Key
-    sslwrapper_verify(pkey != NULL, cleanup, "Empty private key provided.\n");
+    w_verify(pkey, cleanup, "Empty private key provided.\n");
 
     // Initialize context
     ctx = EVP_CIPHER_CTX_new();
-    sslwrapper_verify(ctx != NULL, cleanup, "Error creating EVP_CIPHER_CTX.\n");
-    sslwrapper_verify(
-        EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, pkey, IV) ==
+    w_verify(ctx, cleanup, "Error creating EVP_CIPHER_CTX.\n");
+    w_verify(
+        EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, pkey, _IV) ==
         OPENSSL_SUCCESS,
         cleanup,
         "Encryption error.\n");
 
     // Encryption
     *enc_size = 0;
-    sslwrapper_verify(
+    w_verify(
         EVP_EncryptUpdate(ctx, buffer, enc_size, data, dsize) ==
         OPENSSL_SUCCESS,
         cleanup,
         "Encryption error.\n");
-    sslwrapper_verify(
+    w_verify(
         EVP_EncryptFinal_ex(ctx, (buffer + *enc_size), &final_len) ==
         OPENSSL_SUCCESS,
         cleanup,
@@ -392,15 +403,15 @@ unsigned char *encrypt_sym(const unsigned char *pkey,
     *enc_size += final_len;
 
     // allocate memory for the encrypted data
-    sslwrapper_verify(*enc_size > 0, cleanup, "Encryption error.\n");
+    w_verify(*enc_size > 0, cleanup, "Encryption error.\n");
     encrypted = malloc(*enc_size);
-    sslwrapper_verify(encrypted != NULL,
+    w_verify(encrypted,
         cleanup,
         "Error allocating memory for encrypted data.\n");
     memcpy(encrypted, buffer, *enc_size);
 
 cleanup:
-    sslwrapper_freeif(ctx, EVP_CIPHER_CTX_free);
+    w_freeif(ctx, EVP_CIPHER_CTX_free);
     return encrypted;
 }
 
@@ -420,6 +431,7 @@ unsigned char *decrypt_sym(const unsigned char *pkey,
     const unsigned char *encrypted,
     size_t enc_size)
 {
+    const unsigned char *_IV = (const unsigned char *)IV; /* Change IV */
     int dec_size = 0;
     unsigned char *decrypted = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
@@ -427,24 +439,24 @@ unsigned char *decrypt_sym(const unsigned char *pkey,
     unsigned char buffer[1024];
 
     // Verify Key
-    sslwrapper_verify(pkey != NULL, cleanup, "Empty private key provided.\n");
+    w_verify(pkey, cleanup, "Empty private key provided.\n");
 
     // Initialize context
     ctx = EVP_CIPHER_CTX_new();
-    sslwrapper_verify(ctx != NULL, cleanup, "Error creating EVP_CIPHER_CTX.\n");
-    sslwrapper_verify(
-        EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, pkey, IV) ==
+    w_verify(ctx, cleanup, "Error creating EVP_CIPHER_CTX.\n");
+    w_verify(
+        EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, pkey, _IV) ==
         OPENSSL_SUCCESS,
         cleanup,
         "Decryption error.\n");
 
     // Decryption
-    sslwrapper_verify(
+    w_verify(
         EVP_DecryptUpdate(ctx, buffer, &dec_size, encrypted, enc_size) ==
         OPENSSL_SUCCESS,
         cleanup,
         "Decryption error.\n");
-    sslwrapper_verify(
+    w_verify(
         EVP_DecryptFinal_ex(ctx, buffer + dec_size, &final_len) ==
         OPENSSL_SUCCESS,
         cleanup,
@@ -453,9 +465,9 @@ unsigned char *decrypt_sym(const unsigned char *pkey,
     EVP_CIPHER_CTX_free(ctx);
 
     // Allocate memory for the decrypted data
-    sslwrapper_verify(dec_size > 0, cleanup, "Decryption error.\n");
+    w_verify(dec_size > 0, cleanup, "Decryption error.\n");
     decrypted = malloc(dec_size);
-    sslwrapper_verify(decrypted != NULL,
+    w_verify(decrypted,
         cleanup,
         "Error allocating memory for decrypted data.\n");
     memcpy(decrypted, buffer, dec_size);
@@ -463,7 +475,7 @@ unsigned char *decrypt_sym(const unsigned char *pkey,
 cleanup:
     if (p_dec_size)
         *p_dec_size = dec_size;
-    sslwrapper_freeif(ctx, EVP_CIPHER_CTX_free);
+    w_freeif(ctx, EVP_CIPHER_CTX_free);
     return decrypted;
 }
 
@@ -487,35 +499,35 @@ unsigned char *encrypt_asym(EVP_PKEY *pkey,
     unsigned char *encrypted = NULL;
 
     // verify arguments
-    sslwrapper_verify(pkey != NULL, cleanup, "NULL key provided.\n");
-    sslwrapper_verify(data != NULL, cleanup, "NULL data provided.\n");
-    sslwrapper_verify(dsize > 0, cleanup, "Invalid data size provided.\n");
+    w_verify(pkey, cleanup, "NULL key provided.\n");
+    w_verify(data, cleanup, "NULL data provided.\n");
+    w_verify(dsize > 0, cleanup, "Invalid data size provided.\n");
 
     // Initialize context
     ctx = EVP_PKEY_CTX_new(pkey, NULL);
     // eng = NULL ->start with the default OpenSSL RSA implementation
-    sslwrapper_verify(ctx != NULL, cleanup, "Error creating EVP_PKEY_CTX.\n");
-    sslwrapper_verify(EVP_PKEY_encrypt_init(ctx) == OPENSSL_SUCCESS,
+    w_verify(ctx, cleanup, "Error creating EVP_PKEY_CTX.\n");
+    w_verify(EVP_PKEY_encrypt_init(ctx) == OPENSSL_SUCCESS,
         cleanup,
         "Encryption init error.\n");
-    sslwrapper_verify(
+    w_verify(
         EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING) ==
         OPENSSL_SUCCESS,
         cleanup,
         "Set padding error.\n");
 
     // retrieve the encryption size & allocate memory
-    sslwrapper_verify(
+    w_verify(
         EVP_PKEY_encrypt(ctx, NULL, &enc_size, data, dsize) == OPENSSL_SUCCESS,
         cleanup,
         "Unable to retrieve encryption length.\n");
     encrypted = malloc(enc_size);
-    sslwrapper_verify(encrypted != NULL,
+    w_verify(encrypted,
         cleanup,
         "Error allocating memory for encrypted data.\n");
 
     // Encrypt data
-    sslwrapper_verify(
+    w_verify(
         EVP_PKEY_encrypt(ctx, encrypted, &enc_size, data, dsize) ==
         OPENSSL_SUCCESS,
         cleanup,
@@ -523,12 +535,12 @@ unsigned char *encrypt_asym(EVP_PKEY *pkey,
     goto success;
 
 cleanup:
-    sslwrapper_freeif(encrypted, free);
+    w_freeif(encrypted, free);
 
 success:
     if (p_enc_size)
         *p_enc_size = enc_size;
-    sslwrapper_freeif(ctx, EVP_PKEY_CTX_free);
+    w_freeif(ctx, EVP_PKEY_CTX_free);
     return encrypted;
 }
 
@@ -552,35 +564,35 @@ unsigned char *decrypt_asym(EVP_PKEY *pkey,
     unsigned char *decrypted = NULL;
 
     // verify arguments
-    sslwrapper_verify(pkey != NULL, cleanup, "NULL key provided.\n");
-    sslwrapper_verify(data != NULL, cleanup, "NULL data provided.\n");
-    sslwrapper_verify(dsize > 0, cleanup, "Invalid data size provided.\n");
+    w_verify(pkey, cleanup, "NULL key provided.\n");
+    w_verify(data, cleanup, "NULL data provided.\n");
+    w_verify(dsize > 0, cleanup, "Invalid data size provided.\n");
 
     // Initialize context
     ctx = EVP_PKEY_CTX_new(pkey, NULL);
     // eng = NULL ->start with the default OpenSSL RSA implementation
-    sslwrapper_verify(ctx != NULL, cleanup, "Error creating EVP_PKEY_CTX.\n");
-    sslwrapper_verify(EVP_PKEY_decrypt_init(ctx) == OPENSSL_SUCCESS,
+    w_verify(ctx, cleanup, "Error creating EVP_PKEY_CTX.\n");
+    w_verify(EVP_PKEY_decrypt_init(ctx) == OPENSSL_SUCCESS,
         cleanup,
         "Decryption init error.\n");
-    sslwrapper_verify(
+    w_verify(
         EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING) ==
         OPENSSL_SUCCESS,
         cleanup,
         "Set padding error.\n");
 
     // retrieve the decryption size & allocate memory
-    sslwrapper_verify(
+    w_verify(
         EVP_PKEY_decrypt(ctx, NULL, &dec_size, data, dsize) == OPENSSL_SUCCESS,
         cleanup,
         "Unable to retrieve decryption length.\n");
     decrypted = malloc(dec_size);
-    sslwrapper_verify(decrypted != NULL,
+    w_verify(decrypted,
         cleanup,
         "Error allocating memory for decrypted data.\n");
 
     // Decrypt data
-    sslwrapper_verify(
+    w_verify(
         EVP_PKEY_decrypt(ctx, decrypted, &dec_size, data, dsize) ==
         OPENSSL_SUCCESS,
         cleanup,
@@ -588,12 +600,12 @@ unsigned char *decrypt_asym(EVP_PKEY *pkey,
     goto success;
 
 cleanup:
-    sslwrapper_freeif(decrypted, free);
+    w_freeif(decrypted, free);
 
 success:
     if (p_dec_size)
         *p_dec_size = dec_size;
-    sslwrapper_freeif(ctx, EVP_PKEY_CTX_free);
+    w_freeif(ctx, EVP_PKEY_CTX_free);
     return decrypted;
 }
 
@@ -609,18 +621,16 @@ unsigned char *generate_nonce(const size_t nonce_size)
 
     // Allocate memory
     nonce = malloc(nonce_size);
-    sslwrapper_verify(nonce != NULL,
-        cleanup,
-        "Error allocating memory for nonce.\n");
+    w_verify(nonce, cleanup, "Error allocating memory for nonce.\n");
 
     // Generate random bytes for nonce
-    sslwrapper_verify(RAND_bytes(nonce, nonce_size) == OPENSSL_SUCCESS,
+    w_verify(RAND_bytes(nonce, nonce_size) == OPENSSL_SUCCESS,
         cleanup,
         "Error generating random nonce.\n");
     goto success;
 
 cleanup:
-    sslwrapper_freeif(nonce, free);
+    w_freeif(nonce, free);
 
 success:
     return nonce;
@@ -639,9 +649,9 @@ int do_sha256(unsigned char *hash,
     const size_t dsize)
 {
     int ret = OPENSSL_FAILURE;
-    sslwrapper_verify(data != NULL, cleanup, "Empty data provided.\n");
-    sslwrapper_verify(dsize > 0, cleanup, "Invalid data size.\n");
-    sslwrapper_verify(SHA256(data, dsize, hash) == hash,
+    w_verify(data, cleanup, "Empty data provided.\n");
+    w_verify(dsize > 0, cleanup, "Invalid data size.\n");
+    w_verify(SHA256(data, dsize, hash) == hash,
         cleanup,
         "SHA256 calculation failed\n");
     ret = OPENSSL_SUCCESS;
@@ -665,22 +675,17 @@ unsigned char *sign(EVP_PKEY *pkey,
     unsigned char *signed_data = NULL;
 
     ret = do_sha256(hash, data, dsize);
-    sslwrapper_verify(ret == OPENSSL_SUCCESS,
-        error,
-        "SHA256 calculation failed\n");
+    w_verify(ret == OPENSSL_SUCCESS, error, "SHA256 calculation failed\n");
 
     signed_data = encrypt_asym(pkey, NULL, hash, SHA256_DIGEST_LENGTH);
-    sslwrapper_verify(signed_data != NULL,
-        error,
-        "Signing Cap Token content failed\n");
+    w_verify(signed_data, error, "Signing Cap Token content failed\n");
     goto success;
 
 error:
-    sslwrapper_freeif(signed_data, free);
+    w_freeif(signed_data, free);
 success:
     return signed_data;
 }
-
 
 #ifdef __cplusplus
 }

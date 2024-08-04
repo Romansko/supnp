@@ -18,17 +18,16 @@
 
 #ifdef ENABLE_SUPNP
 
-/* Forward decleration <openssl/types.h> */
-typedef struct evp_pkey_st EVP_PKEY;
-typedef struct x509_st X509;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 
 /* Forward declaration */
+typedef struct evp_pkey_st EVP_PKEY;
+typedef struct x509_st X509;
 typedef struct cJSON cJSON;
+typedef struct _device_info_t device_info_t;
 
 /*!
  * \name SUPnP Document keys
@@ -117,9 +116,9 @@ UPNP_EXPORT_SPEC int SUpnpInit();
 UPNP_EXPORT_SPEC int verify_supnp_document(const cJSON* supnp_document, EVP_PKEY* ca_pkey, X509* uca_cert, X509* device_cert);
 
 /* Temporary function for testing */
-UPNP_EXPORT_SPEC int test_supnp_ducuments();
-UPNP_EXPORT_SPEC int test_nonce_encryption();
-UPNP_EXPORT_SPEC int test_captoken();
+UPNP_EXPORT_SPEC int test_supnp_ducuments(cJSON* dsd, cJSON* sad);
+UPNP_EXPORT_SPEC int test_nonce_encryption(EVP_PKEY *sd_pk, EVP_PKEY *sd_sk);
+UPNP_EXPORT_SPEC int test_captoken(const device_info_t * sd_info, EVP_PKEY * ra_sk);
 
 UPNP_EXPORT_SPEC void SUpnp_test_registration();
 /**/
