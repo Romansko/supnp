@@ -11,6 +11,9 @@
 #define _fopen(fp, filepath, mode) fp = fopen(filepath, mode)
 #endif
 
+#define FILE_OP_ERR  0
+#define FILE_OP_OK   1
+
 /**
  * Helper macro for opening a file. Remember to fclose(file).
  * @param fp FILE * pointer
@@ -61,5 +64,15 @@ UPNP_EXPORT_SPEC size_t get_file_size(FILE* fp);
  */
 UPNP_EXPORT_SPEC char* read_file(const char* filepath, const char* mode, size_t * file_size);
 
+/*!
+ * \brief Write data to file.
+ *
+ * \param filepath file path to write.
+ * \param data data to write.
+ * \param size size of data.
+ *
+ * \return FILE_OP_OK on success, FILE_OP_ERR on failure.
+ */
+UPNP_EXPORT_SPEC int write_file(const char *filepath, const unsigned char * data, size_t size);
 
 #endif //FILE_UTILS_H

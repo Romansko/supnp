@@ -91,15 +91,36 @@ char *read_file(const char *filepath, const char *mode, size_t * file_size)
         error,
         "Error reading file %s\n",
         filepath);
-    goto success;
+    goto cleanup;
 
 error:
     file_freeif(content);
 
-success:
+cleanup:
     if (file_size != NULL)
         *file_size = size;
     macro_file_close(fp);
     return content; /* remember to free(content) */
 }
 
+/**
+ * Write file content
+ * @param filepath given file path to write
+ * @param data file content to write
+ * @param size file content size
+ * @return FILE_OP_OK on success, FILE_OP_ERR on failure
+ */
+int write_file(const char *filepath, const unsigned char * data, const size_t size)
+{
+    int ret = FILE_OP_ERR;
+    FILE *fp = NULL;
+    macro_file_open(fp, filepath, "wb", cleanup);
+    file_verify(fwrite(data, sizeof(unsigned char), size, fp) == size,
+        cleanup,
+        "Error writing file %s\n",
+        filepath);
+    ret = FILE_OP_OK;
+cleanup:
+    macro_file_close(fp);
+    return ret;
+}

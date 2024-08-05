@@ -316,19 +316,17 @@ int test_nonce_encryption(EVP_PKEY *sd_pk, EVP_PKEY *sd_sk)
     return ret;
 }
 
-int test_captoken(const device_info_t *sd_info, EVP_PKEY *ra_sk)
+int test_captoken(const device_info_t *info, EVP_PKEY *ra_sk)
 {
     int ret = SUPNP_E_TEST_FAIL;
-    FILE *desc_doc_fp = NULL;
-    cJSON *sd_token = NULL;
-
-    supnp_verify(sd_info, cleanup, "NULL sd_info\n");
-    sd_token = generate_cap_token(sd_info, ra_sk);
+    cJSON *token = NULL;
+    supnp_verify(info, cleanup, "NULL device info\n");
+    supnp_verify(ra_sk, cleanup, "NULL RA PK\n");
+    token = generate_cap_token(info, ra_sk);
+    supnp_verify(token, cleanup, "Error generating capability token\n");
     ret = SUPNP_E_SUCCESS;
-
 cleanup:
-    free_cap_token(sd_token);
-    macro_file_close(desc_doc_fp)
+    freeif2(token, cJSON_Delete);
     return ret;
 }
 
@@ -337,8 +335,9 @@ cleanup:
  */
 void SUpnp_test_registration()
 {
-    int ret;
+    int ret = SUPNP_E_TEST_FAIL;
     device_info_t sd_info = {0};
+    device_info_t cp_info = {0};
     EVP_PKEY *ra_sk = NULL;
     EVP_PKEY *ra_pk = NULL;
     EVP_PKEY *sd_pk = NULL;
@@ -362,16 +361,21 @@ void SUpnp_test_registration()
     supnp_verify(dsd_root, cleanup, "Error loading DSD document\n");
     supnp_verify(sad_root, cleanup, "Error loading SAD document\n");
 
-    // Fill device info
+    // Fill SD device info
     sd_info.device_type = DEVICE_TYPE_SD;
     sd_info.pk = sd_pk;
     sd_info.desc_doc_uri = "http://192.168.1.100:49152/tvdevicedesc.xml";
     sd_info.cap_token_uri = "http://192.168.1.100:49152/captoken.json";
-
     sd_info.desc_doc = ixmlLoadDocument("./web/tvdevicedesc.xml");
-    supnp_verify(sd_info.desc_doc,
-        cleanup,
-        "Error loading device description document\n");
+    supnp_verify(sd_info.desc_doc, cleanup, "Error loading device description document\n");
+
+    // Fill CP device info
+    cp_info.device_type = DEVICE_TYPE_CP;
+    cp_info.pk = sd_pk;
+    cp_info.desc_doc_uri = ""; /* Not applicable */
+    cp_info.cap_token_uri = "http://192.168.1.100:49152/captoken.json";
+    cp_info.desc_doc = ixmlLoadDocument("./web/tvcontrolSCPD.xml");
+    supnp_verify(cp_info.desc_doc, cleanup, "Error loading device description document\n");
 
     /**
      * A participant sends its SAD / DSD, Cert(uca) and Cert(p).
@@ -402,7 +406,9 @@ void SUpnp_test_registration()
 
     /* Cap Token */
     ret = test_captoken(&sd_info, ra_sk);
-    supnp_log("test_captoken: %d\n", ret);
+    supnp_log("test sd captoken: %d\n", ret);
+    ret = test_captoken(&cp_info, ra_sk);
+    supnp_log("test sd captoken: %d\n", ret);
 
 cleanup:
     freeif2(ra_sk, EVP_PKEY_free);

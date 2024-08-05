@@ -27,8 +27,8 @@ typedef struct _IXML_NodeList IXML_NodeList;
 
 /* Cap Token related */
 #define ID_SIZE       11  /* As presented by the paper */
-#define SD_TYPE       "SERVICE-DEVICE"
-#define CP_TYPE       "CONTROL-POINT"
+#define SD_TYPE_STR   "SERVICE-DEVICE"
+#define CP_TYPE_STR   "CONTROL-POINT"
 #define CT_ID         "ID"
 #define CT_TIMESTAMP  "ISSUER-INSTANT"
 #define RA_PK         "RA-PK"
@@ -39,7 +39,7 @@ typedef struct _IXML_NodeList IXML_NodeList;
 #define CT_ADV_SIG    "ADVERTISEMENT-SIG"
 #define CT_DESC_SIG   "DESCRIPTION-SIG"
 #define CT_SERVICES   "SERVICES"
-#define CT_LOC_SIG    "LOCATION-SIG"
+#define CT_URI_SIG    "LOCATION-SIG"
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,7 +58,6 @@ typedef struct _device_info_t
     char* desc_doc_uri;
     char* cap_token_uri;
     IXML_Document* desc_doc;
-    size_t desc_doc_size;
 } device_info_t;
 
 UPNP_EXPORT_SPEC cJSON* json_string(char* string);
@@ -70,8 +69,6 @@ UPNP_EXPORT_SPEC cJSON* get_timestamp();
 UPNP_EXPORT_SPEC IXML_NodeList* get_service_list(IXML_Document* doc);
 
 UPNP_EXPORT_SPEC cJSON* generate_cap_token(const device_info_t* info, EVP_PKEY* sk_ra);
-
-UPNP_EXPORT_SPEC void free_cap_token(cJSON* cap_token);
 
 #ifdef __cplusplus
 }

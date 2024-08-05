@@ -118,7 +118,7 @@ UPNP_EXPORT_SPEC int verify_supnp_document(const cJSON* supnp_document, EVP_PKEY
 /* Temporary function for testing */
 UPNP_EXPORT_SPEC int test_supnp_ducuments(cJSON* dsd, cJSON* sad);
 UPNP_EXPORT_SPEC int test_nonce_encryption(EVP_PKEY *sd_pk, EVP_PKEY *sd_sk);
-UPNP_EXPORT_SPEC int test_captoken(const device_info_t * sd_info, EVP_PKEY * ra_sk);
+UPNP_EXPORT_SPEC int test_captoken(const device_info_t * info, EVP_PKEY * ra_sk);
 
 UPNP_EXPORT_SPEC void SUpnp_test_registration();
 /**/
