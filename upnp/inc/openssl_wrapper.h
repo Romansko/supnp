@@ -51,7 +51,7 @@ UPNP_EXPORT_SPEC void print_as_hex(const unsigned char* data, size_t len);
  *
  * \return pointer on success, NULL on failure.
  */
-UPNP_EXPORT_SPEC char * binary_to_hex_string(const unsigned char* data, size_t dsize);
+UPNP_EXPORT_SPEC char* binary_to_hex_string(const unsigned char* data, size_t dsize);
 
 /*!
  * \brief convert binary data to hex string.
@@ -148,7 +148,7 @@ UPNP_EXPORT_SPEC unsigned char* encrypt_sym(const unsigned char* pkey, int* p_en
  *
  * \return pointer to decrypted data on success, NULL on failure.
  */
-UPNP_EXPORT_SPEC unsigned char* decrypt_sym(const unsigned char* pkey, int* p_enc_size, const unsigned char* encrypted,
+UPNP_EXPORT_SPEC unsigned char* decrypt_sym(const unsigned char* pkey, int* p_dec_size, const unsigned char* encrypted,
                                             size_t enc_size);
 
 /*!

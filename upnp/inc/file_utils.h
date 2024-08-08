@@ -62,7 +62,7 @@ UPNP_EXPORT_SPEC size_t get_file_size(FILE* fp);
  *
  * \return file content on success, NULL on failure.
  */
-UPNP_EXPORT_SPEC char* read_file(const char* filepath, const char* mode, size_t * file_size);
+UPNP_EXPORT_SPEC char* read_file(const char* filepath, const char* mode, size_t* file_size);
 
 /*!
  * \brief Write data to file.
@@ -73,6 +73,6 @@ UPNP_EXPORT_SPEC char* read_file(const char* filepath, const char* mode, size_t 
  *
  * \return FILE_OP_OK on success, FILE_OP_ERR on failure.
  */
-UPNP_EXPORT_SPEC int write_file(const char *filepath, const unsigned char * data, size_t size);
+UPNP_EXPORT_SPEC int write_file(const char* filepath, const unsigned char* data, size_t size);
 
 #endif //FILE_UTILS_H

@@ -10,20 +10,15 @@
 #ifndef SUPNP_CAPTOKEN_H
 #define SUPNP_CAPTOKEN_H
 
-#include <ixml.h>
-
 #include "UpnpGlobal.h" /* for UPNP_EXPORT_SPEC */
 #include "upnpconfig.h"
-#include "stdint.h"
-#include <stddef.h>
 
 #ifdef ENABLE_SUPNP
 
 /* Forward decleration */
 typedef struct evp_pkey_st EVP_PKEY;
 typedef struct cJSON cJSON;
-typedef struct _IXML_Document IXML_Document;
-typedef struct _IXML_NodeList IXML_NodeList;
+typedef struct _supnp_device_t supnp_device_t;
 
 /* Cap Token related */
 #define ID_SIZE       11  /* As presented by the paper */
@@ -45,30 +40,14 @@ typedef struct _IXML_NodeList IXML_NodeList;
 extern "C" {
 #endif
 
-typedef enum _EDeviceType
-{
-    DEVICE_TYPE_SD = 0,
-    DEVICE_TYPE_CP
-} EDeviceType;
 
-typedef struct _device_info_t
-{
-    EDeviceType device_type;
-    EVP_PKEY* pk;
-    char* desc_doc_uri;
-    char* cap_token_uri;
-    IXML_Document* desc_doc;
-} device_info_t;
-
-UPNP_EXPORT_SPEC cJSON* json_string(char* string);
+UPNP_EXPORT_SPEC cJSON* string_to_json_string(char* string);
 
 UPNP_EXPORT_SPEC cJSON* bytes_to_json_string(unsigned char* bytes);
 
 UPNP_EXPORT_SPEC cJSON* get_timestamp();
 
-UPNP_EXPORT_SPEC IXML_NodeList* get_service_list(IXML_Document* doc);
-
-UPNP_EXPORT_SPEC cJSON* generate_cap_token(const device_info_t* info, EVP_PKEY* sk_ra);
+UPNP_EXPORT_SPEC cJSON* generate_cap_token(const supnp_device_t* dev, EVP_PKEY* sk_ra);
 
 #ifdef __cplusplus
 }

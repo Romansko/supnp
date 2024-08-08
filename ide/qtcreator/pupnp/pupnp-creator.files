@@ -116,6 +116,7 @@ upnp/inc/list.h
 upnp/inc/openssl_wrapper.h
 upnp/inc/supnp.h
 upnp/inc/supnp_captoken.h
+upnp/inc/supnp_device.h
 upnp/inc/supnp_err.h
 upnp/inc/upnp.h
 upnp/inc/upnpconfig.h.cm
@@ -221,6 +222,7 @@ upnp/src/ssdp/ssdp_device.c
 upnp/src/ssdp/ssdp_server.c
 upnp/src/supnp/supnp.c
 upnp/src/supnp/supnp_captoken.c
+upnp/src/supnp/supnp_device.c
 upnp/src/threadutil/FreeList.c
 upnp/src/threadutil/FreeList.h
 upnp/src/threadutil/LinkedList.c

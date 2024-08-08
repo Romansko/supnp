@@ -78,6 +78,7 @@ if ENABLE_SUPNP
 upnpinclude_HEADERS += \
 	inc/supnp_err.h \
 	inc/supnp_captoken.h \
+	inc/supnp_device.h \
 	inc/supnp.h
 endif
 
@@ -222,7 +223,8 @@ endif
 if ENABLE_SUPNP
 libupnp_la_SOURCES += \
 	src/supnp/supnp.c \
-	src/supnp/supnp_captoken.c
+	src/supnp/supnp_captoken.c \
+	src/supnp/supnp_device.c
 endif
 
 if ENABLE_DEBUG

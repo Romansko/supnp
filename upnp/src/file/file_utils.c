@@ -45,7 +45,7 @@
  * @param fp file pointer
  * @return file size
  */
-size_t get_file_size(FILE *fp)
+size_t get_file_size(FILE* fp)
 {
     size_t size = 0;
     file_verify(fp != NULL, error, "File pointer is NULL\n");
@@ -63,34 +63,26 @@ error:
  * @param file_size Optional argument to update file size
  * @return file content
  */
-char *read_file(const char *filepath, const char *mode, size_t * file_size)
+char* read_file(const char* filepath, const char* mode, size_t* file_size)
 {
     size_t size = 0;
-    char *content = NULL;
-    FILE *fp = NULL;
+    char* content = NULL;
+    FILE* fp = NULL;
 
     // Open file
     macro_file_open(fp, filepath, mode, error);
 
     // Retrieve file size
     size = get_file_size(fp);
-    file_verify(size > 0,
-        error,
-        "Error getting file size for file %s\n",
-        filepath);
+    file_verify(size > 0, error, "Error getting file size for file %s\n", filepath);
 
     // Allocate memory for file content
-    content = (char *)malloc(size);
-    file_verify(content != NULL,
-        error,
-        "Error allocating memory for file %s\n",
-        filepath);
+    content = (char*)malloc(size);
+    file_verify(content != NULL, error, "Error allocating memory for file %s\n", filepath);
 
     // Verify whole file was read
-    file_verify(fread(content, sizeof(char), size, fp) == size,
-        error,
-        "Error reading file %s\n",
-        filepath);
+    file_verify(fread(content, sizeof(char), size, fp) == size, error,
+                "Error reading file %s\n", filepath);
     goto cleanup;
 
 error:
@@ -110,15 +102,13 @@ cleanup:
  * @param size file content size
  * @return FILE_OP_OK on success, FILE_OP_ERR on failure
  */
-int write_file(const char *filepath, const unsigned char * data, const size_t size)
+int write_file(const char* filepath, const unsigned char* data, const size_t size)
 {
     int ret = FILE_OP_ERR;
-    FILE *fp = NULL;
+    FILE* fp = NULL;
     macro_file_open(fp, filepath, "wb", cleanup);
-    file_verify(fwrite(data, sizeof(unsigned char), size, fp) == size,
-        cleanup,
-        "Error writing file %s\n",
-        filepath);
+    file_verify(fwrite(data, sizeof(unsigned char), size, fp) == size, cleanup,
+                "Error writing file %s\n", filepath);
     ret = FILE_OP_OK;
 cleanup:
     macro_file_close(fp);

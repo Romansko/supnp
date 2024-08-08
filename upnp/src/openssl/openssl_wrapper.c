@@ -27,15 +27,15 @@ extern "C" {
 #endif
 
 // Obviously change in your apps..
-const char *IV = "SUPNP_CHANGE_IV!"; /* 16 bytes IV for AES-256-CBC */
+const char* IV = "SUPNP_CHANGE_IV!"; /* 16 bytes IV for AES-256-CBC */
 
 /**
  * Returns the last OpenSSL error. No free is required.
  * Make sure SUpnpInit() was called before.
  */
-const char *get_openssl_last_error()
+const char* get_openssl_last_error()
 {
-    const char *err = ERR_error_string(ERR_get_error(), NULL);
+    const char* err = ERR_error_string(ERR_get_error(), NULL);
     ERR_clear_error();
     return err;
 }
@@ -99,11 +99,12 @@ int init_openssl_wrapper()
  * @param data binary data
  * @param len data length
  */
-void print_as_hex(const unsigned char *data, const size_t len)
+void print_as_hex(const unsigned char* data, const size_t len)
 {
     if (data == NULL)
         return;
-    for (size_t i = 0; i < len; ++i) {
+    for (size_t i = 0; i < len; ++i)
+    {
         printf("%02x", data[i]);
     }
     printf("\n");
@@ -115,14 +116,15 @@ void print_as_hex(const unsigned char *data, const size_t len)
  * @param dsize the size of the data
  * @return hex string on success, NULL on failure
  */
-char *binary_to_hex_string(const unsigned char *data, const size_t dsize)
+char* binary_to_hex_string(const unsigned char* data, const size_t dsize)
 {
-    char *hex = NULL;
+    char* hex = NULL;
     w_verify(data, cleanup, "NULL data provided.\n");
     w_verify(dsize > 0, cleanup, "Invalid data size.\n");
     hex = malloc(dsize * 2 + 1);
     w_verify(hex, cleanup, "Error allocating memory for hex string.\n");
-    for (size_t i = 0; i < dsize; ++i) {
+    for (size_t i = 0; i < dsize; ++i)
+    {
         sprintf(hex + (i * 2), "%02x", data[i]);
     }
     hex[dsize * 2] = '\0';
@@ -137,19 +139,18 @@ cleanup:
  * @param dsize the size of the returned binary data
  * @return a binary representation of the hex string
  */
-unsigned char *hex_string_to_binary(const char *hex, size_t *dsize)
+unsigned char* hex_string_to_binary(const char* hex, size_t* dsize)
 {
-    unsigned char *binary = NULL;
+    unsigned char* binary = NULL;
     w_verify(hex, cleanup, "NULL hex string provided.\n");
     w_verify(dsize, cleanup, "NULL data size ptr.\n");
     const size_t hex_len = strlen(hex);
     *dsize = hex_len / 2;
-    w_verify((*dsize % 2 == 0) && (*dsize > 0),
-        cleanup,
-        "Invalid hex string length.\n");
+    w_verify((*dsize % 2 == 0) && (*dsize > 0), cleanup, "Invalid hex string length.\n");
     binary = malloc(*dsize);
     w_verify(binary, cleanup, "Error allocating memory for binary data.\n");
-    for (size_t i = 0; i < hex_len; i += 2) {
+    for (size_t i = 0; i < hex_len; i += 2)
+    {
         sscanf(hex + i, "%2hhx", &binary[i / 2]);
     }
 cleanup:
@@ -163,13 +164,13 @@ cleanup:
  * @param hex a hex string representing a public key
  * @return a EVP_PKEY * public key on success, NULL on failure
  */
-EVP_PKEY *load_public_key_from_hex(const char *hex)
+EVP_PKEY* load_public_key_from_hex(const char* hex)
 {
-    EVP_PKEY *pubkey = NULL;
+    EVP_PKEY* pubkey = NULL;
     size_t dsize = 0;
-    unsigned char *bin = hex_string_to_binary(hex, &dsize);
+    unsigned char* bin = hex_string_to_binary(hex, &dsize);
     w_verify(bin, cleanup, "Error converting public key hex string.\n");
-    const unsigned char *bin_copy = bin;
+    const unsigned char* bin_copy = bin;
     pubkey = d2i_PUBKEY(NULL, &bin_copy, dsize);
     /* Use SubjectPublicKeyInfo format */
     free(bin);
@@ -186,15 +187,13 @@ cleanup:
  * @param p_key_size a pointer to an integer to store the size of the returned buffer
  * @return a pointer to the public key bytes on success, NULL on failure
  */
-unsigned char *public_key_to_bytes(EVP_PKEY *public_key, size_t *p_key_size)
+unsigned char* public_key_to_bytes(EVP_PKEY* public_key, size_t* p_key_size)
 {
     size_t size = 0;
-    unsigned char *buffer = NULL;
+    unsigned char* buffer = NULL;
     w_verify(public_key, cleanup, "Empty public key provided.\n");
     size = i2d_PUBKEY(public_key, &buffer);
-    w_verify((size > 0) && (buffer),
-        cleanup,
-        "Error converting public key to bytes.\n");
+    w_verify((size > 0) && (buffer), cleanup, "Error converting public key to bytes.\n");
 cleanup:
     if (p_key_size)
         *p_key_size = size;
@@ -208,15 +207,13 @@ cleanup:
  * @param p_key_size a pointer to an integer to store the size of the returned buffer
  * @return a pointer to the private key bytes on success, NULL on failure
  */
-unsigned char *private_key_to_bytes(EVP_PKEY *private_key, size_t *p_key_size)
+unsigned char* private_key_to_bytes(EVP_PKEY* private_key, size_t* p_key_size)
 {
     size_t size = 0;
-    unsigned char *buffer = NULL;
+    unsigned char* buffer = NULL;
     w_verify(private_key, cleanup, "Empty private key provided.\n");
     size = i2d_PrivateKey(private_key, &buffer);
-    w_verify((size > 0) && (buffer),
-        cleanup,
-        "Error converting private key to bytes.\n");
+    w_verify((size > 0) && (buffer), cleanup, "Error converting private key to bytes.\n");
 cleanup:
     if (p_key_size != NULL)
         *p_key_size = size;
@@ -229,16 +226,13 @@ cleanup:
  * @param pem_file_path a path to a PEM file
  * @return a EVP_PKEY * public key on success, NULL on failure
  */
-EVP_PKEY *load_public_key_from_pem(const char *pem_file_path)
+EVP_PKEY* load_public_key_from_pem(const char* pem_file_path)
 {
-    EVP_PKEY *loaded_key = NULL;
-    FILE *fp = NULL;
+    EVP_PKEY* loaded_key = NULL;
+    FILE* fp = NULL;
     macro_file_open(fp, pem_file_path, "r", cleanup);
     loaded_key = PEM_read_PUBKEY(fp, NULL, NULL, NULL);
-    w_verify(loaded_key,
-        cleanup,
-        "Error loading public key from PEM file %s\n",
-        pem_file_path);
+    w_verify(loaded_key, cleanup, "Error loading public key from PEM file %s\n", pem_file_path);
 cleanup:
     macro_file_close(fp);
     return loaded_key; /* Remember to EVP_PKEY_free(loaded_key); */
@@ -250,16 +244,13 @@ cleanup:
  * @param pem_file_path a path to a PEM file
  * @return a EVP_PKEY * private key on success, NULL on failure
  */
-EVP_PKEY *load_private_key_from_pem(const char *pem_file_path)
+EVP_PKEY* load_private_key_from_pem(const char* pem_file_path)
 {
-    EVP_PKEY *loaded_key = NULL;
-    FILE *fp = NULL;
+    EVP_PKEY* loaded_key = NULL;
+    FILE* fp = NULL;
     macro_file_open(fp, pem_file_path, "r", cleanup);
     loaded_key = PEM_read_PrivateKey(fp, NULL, NULL, NULL);
-    w_verify(loaded_key,
-        cleanup,
-        "Error loading private key from PEM file %s\n",
-        pem_file_path);
+    w_verify(loaded_key, cleanup, "Error loading private key from PEM file %s\n", pem_file_path);
 cleanup:
     macro_file_close(fp);
     return loaded_key; /* Remember to EVP_PKEY_free(loaded_key); */
@@ -271,16 +262,13 @@ cleanup:
  * @param pem_file_path a path to a PEM file
  * @return a X509 * certificate on success, NULL on failure
  */
-X509 *load_certificate_from_pem(const char *pem_file_path)
+X509* load_certificate_from_pem(const char* pem_file_path)
 {
-    X509 *cert = NULL;
-    FILE *fp = NULL;
+    X509* cert = NULL;
+    FILE* fp = NULL;
     macro_file_open(fp, pem_file_path, "r", cleanup);
     cert = PEM_read_X509(fp, NULL, NULL, NULL);
-    w_verify(cert,
-        cleanup,
-        "Error loading certificate from PEM file %s\n",
-        pem_file_path);
+    w_verify(cert, cleanup, "Error loading certificate from PEM file %s\n", pem_file_path);
 cleanup:
     macro_file_close(fp);
     return cert; /* Remember to X509_free(cert); */
@@ -288,19 +276,19 @@ cleanup:
 
 /**
  * Verify certificate.
- * todo: Should use X509_verify_cert instead of X509_verify ?
  * @param cert_name Certificate's name
  * @param cert a certificate
  * @param pkey a public key corresponding to the entity that signed the certificate
  * @return OPENSSL_SUCCESS on success, OPENSSL_FAILURE on failure.
  */
-int verify_certificate(const char *cert_name, X509 *cert, EVP_PKEY *pkey)
+int verify_certificate(const char* cert_name, X509* cert, EVP_PKEY* pkey)
 {
+
     int ret = OPENSSL_FAILURE;
     w_log("Verifying '%s''s certificate..\n", cert_name);
     w_verify(cert, cleanup, "Empty certificate provided.\n");
     w_verify(pkey, cleanup, "Empty CA public key provided.\n");
-    ret = X509_verify(cert, pkey);
+    ret = X509_verify(cert, pkey);  // todo: Should use X509_verify_cert instead of X509_verify ?
     w_verify(ret == OPENSSL_SUCCESS, cleanup, "verification error\n");
     w_log("'%s''s certificate is valid.\n", cert_name);
 cleanup:
@@ -316,15 +304,11 @@ cleanup:
  * @param dsize the size of the data
  * @return OPENSSL_SUCCESS on success, OPENSSL_FAILURE on failure.
  */
-int verify_signature(const char *sig_name,
-    EVP_PKEY *pkey,
-    const char *hex_sig,
-    const unsigned char *data,
-    const size_t dsize)
+int verify_signature(const char* sig_name, EVP_PKEY* pkey, const char* hex_sig, const unsigned char* data, const size_t dsize)
 {
     int ret = OPENSSL_FAILURE;
-    unsigned char *sig = NULL;
-    EVP_MD_CTX *ctx = NULL;
+    unsigned char* sig = NULL;
+    EVP_MD_CTX* ctx = NULL;
     size_t sig_size = 0;
     w_log("Verifying '%s''s signature..\n", sig_name);
 
@@ -365,14 +349,11 @@ cleanup:
  * @return a pointer to the encrypted data on success, NULL on failure
  * @note The IV is hardcoded in this function.
  */
-unsigned char *encrypt_sym(const unsigned char *pkey,
-    int *enc_size,
-    const unsigned char *data,
-    size_t dsize)
+unsigned char* encrypt_sym(const unsigned char* pkey, int* enc_size, const unsigned char* data, size_t dsize)
 {
-    const unsigned char *_IV = (const unsigned char *)IV; /* Change IV */
-    unsigned char *encrypted = NULL;
-    EVP_CIPHER_CTX *ctx = NULL;
+    const unsigned char* _IV = (const unsigned char*)IV; /* Change IV */
+    unsigned char* encrypted = NULL;
+    EVP_CIPHER_CTX* ctx = NULL;
     int final_len = 0; /* Only for final stage encyption */
     unsigned char buffer[1024];
 
@@ -382,39 +363,27 @@ unsigned char *encrypt_sym(const unsigned char *pkey,
     // Initialize context
     ctx = EVP_CIPHER_CTX_new();
     w_verify(ctx, cleanup, "Error creating EVP_CIPHER_CTX.\n");
-    w_verify(
-        EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, pkey, _IV) ==
-        OPENSSL_SUCCESS,
-        cleanup,
+    w_verify( EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, pkey, _IV) == OPENSSL_SUCCESS, cleanup,
         "Encryption error.\n");
 
     // Encryption
     *enc_size = 0;
-    w_verify(
-        EVP_EncryptUpdate(ctx, buffer, enc_size, data, dsize) ==
-        OPENSSL_SUCCESS,
-        cleanup,
+    w_verify( EVP_EncryptUpdate(ctx, buffer, enc_size, data, dsize) == OPENSSL_SUCCESS, cleanup,
         "Encryption error.\n");
-    w_verify(
-        EVP_EncryptFinal_ex(ctx, (buffer + *enc_size), &final_len) ==
-        OPENSSL_SUCCESS,
-        cleanup,
+    w_verify( EVP_EncryptFinal_ex(ctx, (buffer + *enc_size), &final_len) == OPENSSL_SUCCESS, cleanup,
         "Encryption error.\n");
     *enc_size += final_len;
 
     // allocate memory for the encrypted data
     w_verify(*enc_size > 0, cleanup, "Encryption error.\n");
     encrypted = malloc(*enc_size);
-    w_verify(encrypted,
-        cleanup,
-        "Error allocating memory for encrypted data.\n");
+    w_verify(encrypted, cleanup, "Error allocating memory for encrypted data.\n");
     memcpy(encrypted, buffer, *enc_size);
 
 cleanup:
     w_freeif(ctx, EVP_CIPHER_CTX_free);
     return encrypted;
 }
-
 
 /**
  * Decrypt data using symmetric key.
@@ -426,15 +395,12 @@ cleanup:
  * @return a pointer to the decrypted data on success, NULL on failure
  * @note The IV is hardcoded in this function.
  */
-unsigned char *decrypt_sym(const unsigned char *pkey,
-    int *p_dec_size,
-    const unsigned char *encrypted,
-    size_t enc_size)
+unsigned char* decrypt_sym(const unsigned char* pkey, int* p_dec_size, const unsigned char* encrypted, const size_t enc_size)
 {
-    const unsigned char *_IV = (const unsigned char *)IV; /* Change IV */
+    const unsigned char* _IV = (const unsigned char*)IV; /* Change IV */
     int dec_size = 0;
-    unsigned char *decrypted = NULL;
-    EVP_CIPHER_CTX *ctx = NULL;
+    unsigned char* decrypted = NULL;
+    EVP_CIPHER_CTX* ctx = NULL;
     int final_len = 0; /* Only for final stage decryption */
     unsigned char buffer[1024];
 
@@ -444,22 +410,13 @@ unsigned char *decrypt_sym(const unsigned char *pkey,
     // Initialize context
     ctx = EVP_CIPHER_CTX_new();
     w_verify(ctx, cleanup, "Error creating EVP_CIPHER_CTX.\n");
-    w_verify(
-        EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, pkey, _IV) ==
-        OPENSSL_SUCCESS,
-        cleanup,
+    w_verify( EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, pkey, _IV) == OPENSSL_SUCCESS, cleanup,
         "Decryption error.\n");
 
     // Decryption
-    w_verify(
-        EVP_DecryptUpdate(ctx, buffer, &dec_size, encrypted, enc_size) ==
-        OPENSSL_SUCCESS,
-        cleanup,
+    w_verify( EVP_DecryptUpdate(ctx, buffer, &dec_size, encrypted, enc_size) == OPENSSL_SUCCESS, cleanup,
         "Decryption error.\n");
-    w_verify(
-        EVP_DecryptFinal_ex(ctx, buffer + dec_size, &final_len) ==
-        OPENSSL_SUCCESS,
-        cleanup,
+    w_verify( EVP_DecryptFinal_ex(ctx, buffer + dec_size, &final_len) == OPENSSL_SUCCESS, cleanup,
         "Decryption error.\n");
     dec_size += final_len;
     EVP_CIPHER_CTX_free(ctx);
@@ -467,9 +424,7 @@ unsigned char *decrypt_sym(const unsigned char *pkey,
     // Allocate memory for the decrypted data
     w_verify(dec_size > 0, cleanup, "Decryption error.\n");
     decrypted = malloc(dec_size);
-    w_verify(decrypted,
-        cleanup,
-        "Error allocating memory for decrypted data.\n");
+    w_verify(decrypted, cleanup, "Error allocating memory for decrypted data.\n");
     memcpy(decrypted, buffer, dec_size);
 
 cleanup:
@@ -489,14 +444,11 @@ cleanup:
  * @return a pointer to the encrypted data on success, NULL on failure
  * @note implemented according to https://www.openssl.org/docs/man3.0/man3/EVP_PKEY_encrypt.html
  */
-unsigned char *encrypt_asym(EVP_PKEY *pkey,
-    size_t *p_enc_size,
-    const unsigned char *data,
-    const size_t dsize)
+unsigned char* encrypt_asym(EVP_PKEY* pkey, size_t* p_enc_size, const unsigned char* data, const size_t dsize)
 {
     size_t enc_size = 0;
-    EVP_PKEY_CTX *ctx = NULL;
-    unsigned char *encrypted = NULL;
+    EVP_PKEY_CTX* ctx = NULL;
+    unsigned char* encrypted = NULL;
 
     // verify arguments
     w_verify(pkey, cleanup, "NULL key provided.\n");
@@ -507,30 +459,18 @@ unsigned char *encrypt_asym(EVP_PKEY *pkey,
     ctx = EVP_PKEY_CTX_new(pkey, NULL);
     // eng = NULL ->start with the default OpenSSL RSA implementation
     w_verify(ctx, cleanup, "Error creating EVP_PKEY_CTX.\n");
-    w_verify(EVP_PKEY_encrypt_init(ctx) == OPENSSL_SUCCESS,
-        cleanup,
-        "Encryption init error.\n");
-    w_verify(
-        EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING) ==
-        OPENSSL_SUCCESS,
-        cleanup,
+    w_verify(EVP_PKEY_encrypt_init(ctx) == OPENSSL_SUCCESS, cleanup, "Encryption init error.\n");
+    w_verify( EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING) == OPENSSL_SUCCESS, cleanup,
         "Set padding error.\n");
 
     // retrieve the encryption size & allocate memory
-    w_verify(
-        EVP_PKEY_encrypt(ctx, NULL, &enc_size, data, dsize) == OPENSSL_SUCCESS,
-        cleanup,
+    w_verify( EVP_PKEY_encrypt(ctx, NULL, &enc_size, data, dsize) == OPENSSL_SUCCESS, cleanup,
         "Unable to retrieve encryption length.\n");
     encrypted = malloc(enc_size);
-    w_verify(encrypted,
-        cleanup,
-        "Error allocating memory for encrypted data.\n");
+    w_verify(encrypted, cleanup, "Error allocating memory for encrypted data.\n");
 
     // Encrypt data
-    w_verify(
-        EVP_PKEY_encrypt(ctx, encrypted, &enc_size, data, dsize) ==
-        OPENSSL_SUCCESS,
-        cleanup,
+    w_verify( EVP_PKEY_encrypt(ctx, encrypted, &enc_size, data, dsize) == OPENSSL_SUCCESS, cleanup,
         "Encryption error.\n");
     goto success;
 
@@ -554,14 +494,11 @@ success:
  * @return a pointer to the decrypted data on success, NULL on failure
  * @note implemented according to https://www.openssl.org/docs/man3.0/man3/EVP_PKEY_decrypt.html
  */
-unsigned char *decrypt_asym(EVP_PKEY *pkey,
-    size_t *p_dec_size,
-    const unsigned char *data,
-    const size_t dsize)
+unsigned char* decrypt_asym(EVP_PKEY* pkey, size_t* p_dec_size, const unsigned char* data, const size_t dsize)
 {
     size_t dec_size = 0;
-    EVP_PKEY_CTX *ctx = NULL;
-    unsigned char *decrypted = NULL;
+    EVP_PKEY_CTX* ctx = NULL;
+    unsigned char* decrypted = NULL;
 
     // verify arguments
     w_verify(pkey, cleanup, "NULL key provided.\n");
@@ -572,30 +509,18 @@ unsigned char *decrypt_asym(EVP_PKEY *pkey,
     ctx = EVP_PKEY_CTX_new(pkey, NULL);
     // eng = NULL ->start with the default OpenSSL RSA implementation
     w_verify(ctx, cleanup, "Error creating EVP_PKEY_CTX.\n");
-    w_verify(EVP_PKEY_decrypt_init(ctx) == OPENSSL_SUCCESS,
-        cleanup,
-        "Decryption init error.\n");
-    w_verify(
-        EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING) ==
-        OPENSSL_SUCCESS,
-        cleanup,
+    w_verify(EVP_PKEY_decrypt_init(ctx) == OPENSSL_SUCCESS, cleanup, "Decryption init error.\n");
+    w_verify( EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING) == OPENSSL_SUCCESS, cleanup,
         "Set padding error.\n");
 
     // retrieve the decryption size & allocate memory
-    w_verify(
-        EVP_PKEY_decrypt(ctx, NULL, &dec_size, data, dsize) == OPENSSL_SUCCESS,
-        cleanup,
+    w_verify( EVP_PKEY_decrypt(ctx, NULL, &dec_size, data, dsize) == OPENSSL_SUCCESS, cleanup,
         "Unable to retrieve decryption length.\n");
     decrypted = malloc(dec_size);
-    w_verify(decrypted,
-        cleanup,
-        "Error allocating memory for decrypted data.\n");
+    w_verify(decrypted, cleanup, "Error allocating memory for decrypted data.\n");
 
     // Decrypt data
-    w_verify(
-        EVP_PKEY_decrypt(ctx, decrypted, &dec_size, data, dsize) ==
-        OPENSSL_SUCCESS,
-        cleanup,
+    w_verify( EVP_PKEY_decrypt(ctx, decrypted, &dec_size, data, dsize) == OPENSSL_SUCCESS, cleanup,
         "Decryption error.\n");
     goto success;
 
@@ -615,18 +540,16 @@ success:
  * @param nonce_size the size of the requested nonce
  * @return a nonce on success, NULL on failure
  */
-unsigned char *generate_nonce(const size_t nonce_size)
+unsigned char* generate_nonce(const size_t nonce_size)
 {
-    unsigned char *nonce = NULL;
+    unsigned char* nonce = NULL;
 
     // Allocate memory
     nonce = malloc(nonce_size);
     w_verify(nonce, cleanup, "Error allocating memory for nonce.\n");
 
     // Generate random bytes for nonce
-    w_verify(RAND_bytes(nonce, nonce_size) == OPENSSL_SUCCESS,
-        cleanup,
-        "Error generating random nonce.\n");
+    w_verify(RAND_bytes(nonce, nonce_size) == OPENSSL_SUCCESS, cleanup, "Error generating random nonce.\n");
     goto success;
 
 cleanup:
@@ -644,16 +567,12 @@ success:
  * @param dsize the size of the data
  * @return OPENSSL_SUCCESS on success, OPENSSL_FAILURE on failure
   */
-int do_sha256(unsigned char *hash,
-    const unsigned char *data,
-    const size_t dsize)
+int do_sha256(unsigned char* hash, const unsigned char* data, const size_t dsize)
 {
     int ret = OPENSSL_FAILURE;
     w_verify(data, cleanup, "Empty data provided.\n");
     w_verify(dsize > 0, cleanup, "Invalid data size.\n");
-    w_verify(SHA256(data, dsize, hash) == hash,
-        cleanup,
-        "SHA256 calculation failed\n");
+    w_verify(SHA256(data, dsize, hash) == hash, cleanup, "SHA256 calculation failed\n");
     ret = OPENSSL_SUCCESS;
 cleanup:
     return ret;
@@ -666,13 +585,11 @@ cleanup:
  * @param dsize size of data
  * @return signed data on success, NULL on failure
  */
-unsigned char *sign(EVP_PKEY *pkey,
-    const unsigned char *data,
-    const size_t dsize)
+unsigned char* sign(EVP_PKEY* pkey, const unsigned char* data, const size_t dsize)
 {
     int ret = OPENSSL_FAILURE;
     unsigned char hash[SHA256_DIGEST_LENGTH];
-    unsigned char *signed_data = NULL;
+    unsigned char* signed_data = NULL;
 
     ret = do_sha256(hash, data, dsize);
     w_verify(ret == OPENSSL_SUCCESS, error, "SHA256 calculation failed\n");

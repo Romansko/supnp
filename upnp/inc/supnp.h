@@ -27,7 +27,9 @@ extern "C" {
 typedef struct evp_pkey_st EVP_PKEY;
 typedef struct x509_st X509;
 typedef struct cJSON cJSON;
-typedef struct _device_info_t device_info_t;
+typedef struct _supnp_device_t supnp_device_t;
+typedef struct _IXML_Document IXML_Document;
+typedef struct _IXML_NodeList IXML_NodeList;
 
 /*!
  * \name SUPnP Document keys
@@ -109,16 +111,24 @@ typedef struct _device_info_t device_info_t;
 UPNP_EXPORT_SPEC int SUpnpInit();
 
 /*!
+ * \brief extract service list from DSD / SAD document.
+ *
+ * \Note The caller is responsible for freeing the returned list. (ixmlNodeList_free)
+ *
+ * \return pointer to service list on success, NULL on failure.
+ */
+UPNP_EXPORT_SPEC IXML_NodeList* get_xml_service_list(IXML_Document* doc);
+
+/*!
  * \brief Verify DSD / SAD document.
  *
  * \return SUPNP_E_SUCCESS on success, SUPNP_E_INVALID_CERTIFICATE on failure.
  */
-UPNP_EXPORT_SPEC int verify_supnp_document(const cJSON* supnp_document, EVP_PKEY* ca_pkey, X509* uca_cert, X509* device_cert);
+UPNP_EXPORT_SPEC int verify_supnp_document(EVP_PKEY *ca_pkey, X509 *uca_cert, const supnp_device_t *dev);
 
 /* Temporary function for testing */
-UPNP_EXPORT_SPEC int test_supnp_ducuments(cJSON* dsd, cJSON* sad);
-UPNP_EXPORT_SPEC int test_nonce_encryption(EVP_PKEY *sd_pk, EVP_PKEY *sd_sk);
-UPNP_EXPORT_SPEC int test_captoken(const device_info_t * info, EVP_PKEY * ra_sk);
+UPNP_EXPORT_SPEC void test_nonce_encryption(EVP_PKEY* pk, EVP_PKEY* sk);
+UPNP_EXPORT_SPEC void test_captoken_generation(const supnp_device_t* dev, EVP_PKEY* ra_sk);
 
 UPNP_EXPORT_SPEC void SUpnp_test_registration();
 /**/
