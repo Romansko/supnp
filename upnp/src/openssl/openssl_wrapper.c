@@ -283,14 +283,12 @@ cleanup:
  */
 int verify_certificate(const char* cert_name, X509* cert, EVP_PKEY* pkey)
 {
-
     int ret = OPENSSL_FAILURE;
-    w_log("Verifying '%s''s certificate..\n", cert_name);
+    const char * name = cert_name ? cert_name : "";
     w_verify(cert, cleanup, "Empty certificate provided.\n");
     w_verify(pkey, cleanup, "Empty CA public key provided.\n");
     ret = X509_verify(cert, pkey);  // todo: Should use X509_verify_cert instead of X509_verify ?
-    w_verify(ret == OPENSSL_SUCCESS, cleanup, "verification error\n");
-    w_log("'%s''s certificate is valid.\n", cert_name);
+    w_verify(ret == OPENSSL_SUCCESS, cleanup, "'%s' certificate verification error\n", name);
 cleanup:
     return ret;
 }
@@ -310,7 +308,6 @@ int verify_signature(const char* sig_name, EVP_PKEY* pkey, const char* hex_sig, 
     unsigned char* sig = NULL;
     EVP_MD_CTX* ctx = NULL;
     size_t sig_size = 0;
-    w_log("Verifying '%s''s signature..\n", sig_name);
 
     // Arguments Verification
     w_verify(pkey, cleanup, "NULL public key provided.\n");

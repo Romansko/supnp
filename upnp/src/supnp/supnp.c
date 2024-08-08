@@ -297,37 +297,25 @@ void test_nonce_encryption(EVP_PKEY* pk, EVP_PKEY* sk)
     /* Generates a nonce  */
     nonce = generate_nonce(OPENSSL_CSPRNG_SIZE);
     supnp_verify(nonce, cleanup, "Error generating nonce.\n");
-    supnp_log("Generated nonce: ");
-    print_as_hex(nonce, OPENSSL_CSPRNG_SIZE);
 
     /* Encrypt the challenge using the participant's public key */
     enc_nonce = encrypt_asym(pk, &enc_len, nonce, OPENSSL_CSPRNG_SIZE);
     supnp_verify(enc_nonce, cleanup, "Error encrypting nonce.\n");
-    supnp_log("Encrypted nonce: ");
-    print_as_hex(enc_nonce, enc_len);
 
     /* Decrypt the challenge using the participant's private key */
     dec_nonce = decrypt_asym(sk, &dec_len, enc_nonce, enc_len);
     supnp_verify(dec_nonce, cleanup, "Error decrypting nonce.\n");
-    supnp_log("Decrypted nonce: ");
-    print_as_hex(dec_nonce, dec_len);
 
     /* hash the nonce N (HN = Hash(N)). */
     supnp_verify(do_sha256(hash, nonce, OPENSSL_CSPRNG_SIZE) == OPENSSL_SUCCESS, cleanup, "Error hashing nonce.\n");
-    supnp_log("Hash(nonce): ");
-    print_as_hex(hash, SHA256_DIGEST_LENGTH);
 
     /* Encrypt the nonce hash with participant's private key (signed response) */
     enc_hash = encrypt_asym(sk, &ehash_len, hash, SHA256_DIGEST_LENGTH);
     supnp_verify(enc_hash, cleanup, "Error encrypting hash(nonce).\n");
-    supnp_log("Encrypted Hash(nonce): ");
-    print_as_hex(enc_hash, SHA256_DIGEST_LENGTH);
 
     /* Decrypt the response using the public key */
     dec_hash = decrypt_asym(sk, &dhash_len, enc_hash, ehash_len);
     supnp_verify(dec_hash, cleanup, "Error decrypting hash(nonce).\n");
-    supnp_log("Decrypted Hash(nonce): ");
-    print_as_hex(dec_hash, SHA256_DIGEST_LENGTH);
 
     /* Verify hashes matches */
     supnp_verify(memcmp(nonce, dec_nonce, OPENSSL_CSPRNG_SIZE) == 0, cleanup,
@@ -410,11 +398,11 @@ void SUpnp_test_registration()
      */
     if (verify_supnp_document(ca_pk, uca_cert, &sd_info) == SUPNP_E_SUCCESS)
     {
-        supnp_log("DSD OK.\n");
+        supnp_log("Device Specification Document (DSD) for SD OK.\n");
     }
     if (verify_supnp_document(ca_pk, uca_cert, &cp_info) == SUPNP_E_SUCCESS)
     {
-        supnp_log("SAD OK.\n");
+        supnp_log("Service Action Document (SAD) for CP OK.\n");
     }
 
     /* Nonce Challenge Tests */
